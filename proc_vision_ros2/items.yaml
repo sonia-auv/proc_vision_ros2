@@ -1,0 +1,47 @@
+# Constante de conversion pour la caméra
+constante_camera: 0.0015
+
+# Largeur et hauteur en mètres de chaque items
+bin: 
+  w: .610
+  h: .914
+bin_rouge: 
+  w: .302
+  h: .302
+bin_bleue: 
+  w: .302
+  h: .302
+gate_rouge: 
+  w: .302
+  h: .302
+gate_bleue: 
+  w: .302
+  h: .302
+gate: 
+  w: 3.048
+  h: 1.524
+buoy: 
+  w: .21
+  h: .28
+samples_table: 
+  w: 2.7
+  h: 2.7
+path: 
+  w: .1524
+  h: 1.067
+torpille:
+  w: .608
+  h: .608
+torpille_target:
+  1: 
+    w: .101
+    h: .101
+  2: 
+    w: .126
+    h: .126
+  3: 
+    w: .15
+    h: .15
+  4: 
+    w: .177
+    h: .177

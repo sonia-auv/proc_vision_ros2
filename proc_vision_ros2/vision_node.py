@@ -39,16 +39,19 @@ class VisionNode(Node):
     def __img_front_callback(self, msg: Image):
         self.get_logger().info("IMG received!!")
         if self.camera_front:
-            self.__classification_front_pub.publish(self.__img_detection(msg))
+            for detected_obj in self.__img_detection(msg):
+                self.__classification_front_pub.publish(detected_obj)
 
     def __img_bottom_callback(self, msg: Image):
         self.get_logger().info("IMG received!!")
         if self.camera_bottom:
-            self.__classification_bottom_pub.publish(self.__img_detection(msg))
+            for detected_obj in self.__img_detection(msg):
+                self.__classification_bottom_pub.publish(detected_obj)
 
-    def __img_detection(self, msg: Image):
+    def __img_detection(self, msg: Image)->list[VisionClass]:
         img = np.array(msg.data).reshape((400,600,3))
         results = self.model(img, imgsz=[600, 400], conf=0.5, verbose=False)
+        detections = []
         for res in results:
             detection_count = res.boxes.shape[0]
             for i in range(detection_count):
@@ -71,4 +74,5 @@ class VisionNode(Node):
                 classification.classification = name
                 # classification.distance = items.get_dist(y1 - y2, name)
                 classification.confidence = conf
-        return classification
+                detections.append(classification)
+        return detections

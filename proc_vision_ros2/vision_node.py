@@ -3,7 +3,8 @@ from rclpy.node import Node
 from sensor_msgs.msg import Image
 from ultralytics import YOLO
 import numpy as np
-from sonia_common_ros2.msg import VisionClass, AiActivationService
+from sonia_common_ros2.msg import VisionClass
+from sonia_common_ros2.srv import AiActivationService
 from items_robosub import ItemsRobosub
 
 MODEL = 'models/model-1-yolov8n.pt'

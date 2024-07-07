@@ -48,7 +48,7 @@ class VisionNode(Node):
             for detected_obj in self.__img_detection(msg):
                 self.__classification_bottom_pub.publish(detected_obj)
 
-    def __img_detection(self, msg: Image)->list[VisionClass]:
+    def __img_detection(self, msg: Image):
         img = np.array(msg.data).reshape((400,600,3))
         results = self.model(img, imgsz=[600, 400], conf=0.5, verbose=False)
         detections = []

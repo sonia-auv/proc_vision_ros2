@@ -15,7 +15,7 @@ class VisionNode(Node):
 
     def __init__(self):
         super().__init__("vision_node")
-        self.camera_front = True
+        self.camera_front = False
         self.camera_bottom = False
         self.__ai_activation_sub = self.create_service(AiActivationService, "proc_vision/ai_activation", self.__ai_activation_callback)
         self.__front_cam_sub = self.create_subscription(Image, "camera_array/front/image_raw", self.__img_front_callback, 10)

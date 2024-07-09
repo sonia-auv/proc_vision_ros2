@@ -41,13 +41,13 @@ class VisionNode(Node):
         return response
 
     def __img_front_callback(self, msg: Image):
-        self.get_logger().info("IMG received!!")
+        self.get_logger().info("IMG FRONT received!!")
         if self.camera_front:
             for detected_obj in self.__img_detection(msg):
                 self.__classification_front_pub.publish(detected_obj)
 
     def __img_bottom_callback(self, msg: Image):
-        self.get_logger().info("IMG received!!")
+        self.get_logger().info("IMG BOTTOM received!!")
         if self.camera_bottom:
             for detected_obj in self.__img_detection(msg):
                 self.__classification_bottom_pub.publish(detected_obj)
@@ -76,7 +76,7 @@ class VisionNode(Node):
                 classification.endpoint.x = float(x2)
                 classification.endpoint.y = float(y2)
                 classification.classification = name
-                # classification.distance = items.get_dist(y1 - y2, name)
+                classification.distance = items.get_dist(y2 - y1, name)
                 classification.confidence = conf
                 detections.append(classification)
         return detections

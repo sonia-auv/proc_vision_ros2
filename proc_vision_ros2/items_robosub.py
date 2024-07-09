@@ -8,6 +8,7 @@ class ItemsRobosub():
         self.constante = self.args['constante_camera']
 
     def get_dist(self, h, cls_name, target_index=1):
+        print(cls_name)
         try:
             if cls_name == 'torpille_target':
                 dist = self.get_dist_target(h, target_index)
@@ -19,8 +20,7 @@ class ItemsRobosub():
         
     def get_dist_target(self, h, index_target):
         try:
-            target = self.args['torpille_target'][index_target]
-            dist = target['h'] / (h * self.constante)
+            dist = self.args['torpille_target'][index_target]['h'] / (h * self.constante)
             return dist
         except:
             return -1

@@ -19,6 +19,7 @@ class ItemsRobosub():
             return -1
         
     def get_dist_target(self, h, index_target):
+        print(self.args['torpille_target'][index_target]['h'])
         try:
             dist = self.args['torpille_target'][index_target]['h'] / (h * self.constante)
             return dist

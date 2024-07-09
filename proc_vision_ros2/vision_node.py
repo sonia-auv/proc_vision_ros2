@@ -25,18 +25,20 @@ class VisionNode(Node):
         self.__classification_bottom_pub = self.create_publisher(VisionClass, "proc_vision/bottom/classification", 10)
 
     def __ai_activation_callback(self, request, response):
-        if int(request.ai_activation) == int(AiActivationService.Request.FRONT):
+        if request.ai_activation == AiActivationService.Request.FRONT:
             self.camera_front = True
             self.camera_bottom = False
-        elif int(request.ai_activation) == int(AiActivationService.Request.BOTTOM):
+        elif request.ai_activation == AiActivationService.Request.BOTTOM:
             self.camera_front = False
             self.camera_bottom = True
-        elif int(request.ai_activation) == int(AiActivationService.Request.BOTH):
+        elif request.ai_activation == AiActivationService.Request.BOTH:
             self.camera_front = True
             self.camera_bottom = True
         else:
             self.camera_front = False
             self.camera_bottom = False
+
+        return response
 
     def __img_front_callback(self, msg: Image):
         self.get_logger().info("IMG received!!")

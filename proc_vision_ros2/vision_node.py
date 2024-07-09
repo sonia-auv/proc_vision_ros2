@@ -24,14 +24,14 @@ class VisionNode(Node):
         self.__classification_front_pub = self.create_publisher(VisionClass, "proc_vision/front/classification", 10)
         self.__classification_bottom_pub = self.create_publisher(VisionClass, "proc_vision/bottom/classification", 10)
 
-    def __ai_activation_callback(self, msg: AiActivationService):
-        if msg.ai_activation == AiActivationService.FRONT:
+    def __ai_activation_callback(self, request, response):
+        if request.ai_activation == AiActivationService.FRONT:
             self.camera_front = True
             self.camera_bottom = False
-        elif msg.ai_activation == AiActivationService.BOTTOM:
+        elif request.ai_activation == AiActivationService.BOTTOM:
             self.camera_front = False
             self.camera_bottom = True
-        elif msg.ai_activation == AiActivationService.BOTH:
+        elif request.ai_activation == AiActivationService.BOTH:
             self.camera_front = True
             self.camera_bottom = True
         else:

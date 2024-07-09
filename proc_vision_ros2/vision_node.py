@@ -76,7 +76,7 @@ class VisionNode(Node):
                 classification.endpoint.x = float(x2)
                 classification.endpoint.y = float(y2)
                 classification.classification = name
-                classification.distance = items.get_dist(y2 - y1, name)
+                classification.distance = float(items.get_dist(y2 - y1, name))
                 classification.confidence = conf
                 detections.append(classification)
         return detections

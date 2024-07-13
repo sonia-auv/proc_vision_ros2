@@ -9,7 +9,11 @@ from sonia_common_ros2.msg import VisionClass
 from sonia_common_ros2.srv import AiActivationService
 from .items_robosub import ItemsRobosub
 
-MODEL = '/home/sonia/ssd/ros2_sonia_ws/src/proc_vision_ros2/models/model-1-yolov8n.pt'
+MODEL_DIR = '/home/sonia/ssd/ros2_sonia_ws/src/proc_vision_ros2/models/'
+MODELS = ['model-1-yolov8n.pt', 
+          'model-2-yolov8n.pt', 
+          'yolov10-1-700.pt']
+MODEL_INDEX = 2
 
 class VisionNode(Node):
 
@@ -20,7 +24,7 @@ class VisionNode(Node):
         self.__ai_activation_sub = self.create_service(AiActivationService, "proc_vision/ai_activation", self.__ai_activation_callback)
         self.__front_cam_sub = self.create_subscription(Image, "camera_array/front/image_raw", self.__img_front_callback, 10)
         self.__bottom_cam_sub = self.create_subscription(Image, "camera_array/bottom/image_raw", self.__img_bottom_callback, 10)
-        self.model = YOLO(MODEL)
+        self.model = YOLO(MODEL_DIR + MODELS[MODEL_INDEX])
         self.__classification_front_pub = self.create_publisher(VisionClass, "proc_vision/front/classification", 10)
         self.__classification_bottom_pub = self.create_publisher(VisionClass, "proc_vision/bottom/classification", 10)
 

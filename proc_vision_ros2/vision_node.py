@@ -9,7 +9,7 @@ import numpy as np
 import cv2
 import os
 from time import time
-from sonia_common.msg import Detection
+from sonia_common.msg import Detection, DetectionArray
 from sonia_common.srv import AiActivationService
 from proc_vision_ros2.items_robosub import ItemsRobosub
 
@@ -33,8 +33,8 @@ class VisionNode():
         #self.__bottom_cam_sub = rospy.Subscriber("camera_array/bottom/image_raw", Image, self.__img_bottom_callback, 10)
         self.__bottom_cam_sub = rospy.Subscriber("proc_simulation/bottom", Image, self.__img_bottom_callback, 10)
         self.model = YOLO(MODEL_DIR + MODELS[MODEL_INDEX])
-        self.__classification_front_pub = rospy.Publisher("proc_vision/front/classification", Detection, queue_size=10)
-        self.__classification_bottom_pub = rospy.Publisher("proc_vision/bottom/classification", Detection, queue_size=10)
+        self.__classification_front_pub = rospy.Publisher("proc_vision/front/classification", DetectionArray, queue_size=10)
+        self.__classification_bottom_pub = rospy.Publisher("proc_vision/bottom/classification", DetectionArray, queue_size=10)
 
         if SAVE_OUTPUT:
             if not os.path.exists(OUTPUT_DIR):
@@ -58,14 +58,20 @@ class VisionNode():
     def __img_front_callback(self, msg: Image, empty):
         rospy.loginfo("IMG FRONT received!!")
         if self.camera_front:
+            detection_array = DetectionArray()
             for detected_obj in self.__img_detection(msg):
-                self.__classification_front_pub.publish(detected_obj)
+                detection_array.detected_object.append(detected_obj)
+            
+            self.__classification_front_pub.publish(detection_array)
 
     def __img_bottom_callback(self, msg: Image, empty):
         rospy.loginfo("IMG BOTTOM received!!")
         if self.camera_bottom:
+            detection_array = DetectionArray()
             for detected_obj in self.__img_detection(msg):
-                self.__classification_bottom_pub.publish(detected_obj)
+                detection_array.detected_object.append(detected_obj)
+            
+            self.__classification_bottom_pub.publish(detection_array)
 
     def __img_detection(self, msg: Image):
         #img = np.array(msg.data).reshape((400,600,3))

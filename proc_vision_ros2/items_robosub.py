@@ -1,5 +1,5 @@
 import yaml
-PARAM_DIR = '/home/sonia/ssd/ros2_sonia_ws/src/proc_vision_ros2/proc_vision_ros2/'
+PARAM_DIR = 'src/proc_vision_ros2/proc_vision_ros2/'
 PARAM_YAML = 'items.yaml'
 
 class ItemsRobosub():

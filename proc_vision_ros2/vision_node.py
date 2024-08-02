@@ -28,10 +28,10 @@ class VisionNode():
         self.camera_front = False
         self.camera_bottom = False
         self.__ai_activation_sub = rospy.Service("proc_vision/ai_activation", AiActivationService, self.__ai_activation_callback)
-        #self.__front_cam_sub = rospy.Subscriber("camera_array/front/image_raw", Image, self.__img_front_callback, 10)
-        self.__front_cam_sub = rospy.Subscriber("proc_simulation/front", Image, self.__img_front_callback, 10)
-        #self.__bottom_cam_sub = rospy.Subscriber("camera_array/bottom/image_raw", Image, self.__img_bottom_callback, 10)
-        self.__bottom_cam_sub = rospy.Subscriber("proc_simulation/bottom", Image, self.__img_bottom_callback, 10)
+        self.__front_cam_sub = rospy.Subscriber("camera_array/front/image_raw", Image, self.__img_front_callback, 10)
+        self.__front_cam_sub = rospy.Subscriber("proc_simulation/front", Image, self.__img_front_sim_callback, 10)
+        self.__bottom_cam_sub = rospy.Subscriber("camera_array/bottom/image_raw", Image, self.__img_bottom_callback, 10)
+        self.__bottom_cam_sub = rospy.Subscriber("proc_simulation/bottom", Image, self.__img_bottom_sim_callback, 10)
         self.model = YOLO(MODEL_DIR + MODELS[MODEL_INDEX])
         self.__classification_front_pub = rospy.Publisher("proc_vision/front/classification", DetectionArray, queue_size=10)
         self.__classification_bottom_pub = rospy.Publisher("proc_vision/bottom/classification", DetectionArray, queue_size=10)
@@ -58,27 +58,58 @@ class VisionNode():
         return []
 
     def __img_front_callback(self, msg: Image, empty):
-        rospy.loginfo("IMG FRONT received!!")
         if self.camera_front:
+            imgconv = np.frombuffer(msg.data, dtype=np.uint8).reshape(400, 600, 3)
+            img = np.array(imgconv)
+
             detection_array = DetectionArray()
-            for detected_obj in self.__img_detection(msg):
+            for detected_obj in self.__img_detection(img):
+                detection_array.detected_object.append(detected_obj)
+            
+            self.__classification_front_pub.publish(detection_array)
+
+    def __img_front_sim_callback(self, msg: Image, empty):
+        if self.camera_front:
+            imgconv = np.frombuffer(msg.data, dtype=np.uint8).reshape(400, 600, 3)
+            img = np.array(imgconv)
+
+            temp = img[:,:,0].copy()
+            img[:,:,0] = img[:,:,2]
+            img[:,:,2] = temp
+
+            detection_array = DetectionArray()
+            for detected_obj in self.__img_detection(img):
                 detection_array.detected_object.append(detected_obj)
             
             self.__classification_front_pub.publish(detection_array)
 
     def __img_bottom_callback(self, msg: Image, empty):
-        rospy.loginfo("IMG BOTTOM received!!")
         if self.camera_bottom:
+            imgconv = np.frombuffer(msg.data, dtype=np.uint8).reshape(400, 600, 3)
+            img = np.array(imgconv)
+
             detection_array = DetectionArray()
             for detected_obj in self.__img_detection(msg):
                 detection_array.detected_object.append(detected_obj)
             
             self.__classification_bottom_pub.publish(detection_array)
 
-    def __img_detection(self, msg: Image):
-        # img = np.array(msg.data).reshape((400,600,3))
-        imgconv = np.frombuffer(msg.data, dtype=np.uint8).reshape(400, 600, 3)
-        img = np.array(imgconv)
+    def __img_bottom_sim_callback(self, msg: Image, empty):
+        if self.camera_bottom:
+            imgconv = np.frombuffer(msg.data, dtype=np.uint8).reshape(400, 600, 3)
+            img = np.array(imgconv)
+
+            temp = img[:,:,0].copy()
+            img[:,:,0] = img[:,:,2]
+            img[:,:,2] = temp
+
+            detection_array = DetectionArray()
+            for detected_obj in self.__img_detection(msg):
+                detection_array.detected_object.append(detected_obj)
+            
+            self.__classification_bottom_pub.publish(detection_array)
+
+    def __img_detection(self, img):
         
         results = self.model(img, imgsz=[600, 400], conf=0.5, verbose=False)
         detections = []

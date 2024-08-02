@@ -20,7 +20,7 @@ MODELS = ['model-1-yolov8n.pt',
           'zac_v8.pt',
           'zac_v10.pt',
           'carriere_et_zac_v8.pt',
-          'carriere_et_zac_v10.pt',]
+          'carriere_et_zac_v10.pt']
 MODEL_INDEX = 1
 OUTPUT_DIR = 'output_ai/'
 SAVE_OUTPUT = False

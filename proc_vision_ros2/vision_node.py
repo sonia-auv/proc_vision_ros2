@@ -25,7 +25,7 @@ class VisionNode():
 
     def __init__(self):
 
-        self.camera_front = True
+        self.camera_front = False
         self.camera_bottom = False
         self.__ai_activation_sub = rospy.Service("proc_vision/ai_activation", AiActivationService, self.__ai_activation_callback)
         #self.__front_cam_sub = rospy.Subscriber("camera_array/front/image_raw", Image, self.__img_front_callback, 10)
@@ -55,6 +55,8 @@ class VisionNode():
             self.camera_front = False
             self.camera_bottom = False
 
+        return []
+
     def __img_front_callback(self, msg: Image, empty):
         rospy.loginfo("IMG FRONT received!!")
         if self.camera_front:
@@ -68,15 +70,9 @@ class VisionNode():
                 self.__classification_bottom_pub.publish(detected_obj)
 
     def __img_detection(self, msg: Image):
-        #img = np.array(msg.data).reshape((400,600,3))
-
-        img = np.zeros([400, 600, 3])
-
-        for i in range(400) :
-            for j in range(600) : 
-                    img[i][j][0] = msg.data[1800*i+3*j+2]
-                    img[i][j][1] = msg.data[1800*i+3*j+1]
-                    img[i][j][2] = msg.data[1800*i+3*j+0]
+        # img = np.array(msg.data).reshape((400,600,3))
+        imgconv = np.frombuffer(msg.data, dtype=np.uint8).reshape(400, 600, 3)
+        img = np.array(imgconv)
         
         results = self.model(img, imgsz=[600, 400], conf=0.5, verbose=False)
         detections = []

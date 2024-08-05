@@ -95,7 +95,7 @@ class VisionNode():
             img = np.array(imgconv)
 
             detection_array = DetectionArray()
-            for detected_obj in self.__img_detection(msg):
+            for detected_obj in self.__img_detection(img):
                 detection_array.detected_object.append(detected_obj)
             
             self.__classification_bottom_pub.publish(detection_array)
@@ -110,7 +110,7 @@ class VisionNode():
             img[:,:,2] = temp
 
             detection_array = DetectionArray()
-            for detected_obj in self.__img_detection(msg):
+            for detected_obj in self.__img_detection(img):
                 detection_array.detected_object.append(detected_obj)
             
             self.__classification_bottom_pub.publish(detection_array)
@@ -159,8 +159,11 @@ class VisionNode():
                                 (int(x1),int(y1)), 
                                 (int(x2),int(y2)), 
                                 (0,0,255), 1)
-                    cv2.imwrite(OUTPUT_DIR+'pred_'+str(int(1000*time()))+'.jpg', 
-                                img) 
+                     
+        if SAVE_OUTPUT and detection_count != 0:
+            cv2.imwrite(OUTPUT_DIR+'pred_'+str(int(1000*time()))+'.jpg', 
+                        img)
+
         return detections
 
 if __name__ == "__main__":

@@ -1,5 +1,5 @@
 # Constante de conversion pour la caméra
-constante_camera: 0.0015
+constante_camera: 0.0017
 
 # Largeur et hauteur en mètres de chaque items
 bin: 
@@ -22,7 +22,7 @@ gate:
   h: 1.524
 buoy: 
   w: .21
-  h: .28
+  h: .25
 samples_table: 
   w: 2.7
   h: 2.7
@@ -30,8 +30,8 @@ path:
   w: .1524
   h: 1.067
 torpille:
-  w: .608
-  h: .608
+  w: .7
+  h: .7
 torpille_target:
   1: 
     w: .101

@@ -26,6 +26,7 @@ MODELS = ['model-1-yolov8n.pt',
 MODEL_INDEX = 7
 OUTPUT_DIR = 'output_ai/'
 SAVE_OUTPUT = False
+PUBLISH_OUTPUT = True
 
 class VisionNode():
 
@@ -41,6 +42,7 @@ class VisionNode():
         self.model = YOLO(MODEL_DIR + MODELS[MODEL_INDEX])
         self.__classification_front_pub = rospy.Publisher("proc_vision/front/classification", DetectionArray, queue_size=10)
         self.__classification_bottom_pub = rospy.Publisher("proc_vision/bottom/classification", DetectionArray, queue_size=10)
+        self.__image_output_pub = rospy.Publisher("proc_vision/ai_output", Image, queue_size=10)
 
         if SAVE_OUTPUT:
             if not os.path.exists(OUTPUT_DIR):
@@ -142,7 +144,7 @@ class VisionNode():
                 classification.confidence = float(res.boxes.conf[i].item())
                 detections.append(classification)
 
-                if SAVE_OUTPUT:
+                if SAVE_OUTPUT or PUBLISH_OUTPUT:
                     cv2.putText(img, 
                                 name, 
                                 (int((x1+5)),
@@ -150,7 +152,7 @@ class VisionNode():
                                 cv2.FONT_HERSHEY_PLAIN, 
                                 .7, (0,0,255), 1, 1)
                     cv2.putText(img, 
-                                "{:.1f}%".format(res.boxes.conf[i].item()), 
+                                "{:.1f}%".format(res.boxes.conf[i].item()*100), 
                                 (int((x1+5)),
                                 int((y2+10)/2)), 
                                 cv2.FONT_HERSHEY_PLAIN, 
@@ -163,6 +165,16 @@ class VisionNode():
         if SAVE_OUTPUT and detection_count != 0:
             cv2.imwrite(OUTPUT_DIR+'pred_'+str(int(1000*time()))+'.jpg', 
                         img)
+
+        if PUBLISH_OUTPUT:
+            image_out = Image()
+            image_out.height=400
+            image_out.width=600
+            image_out.encoding="bgr8"
+            image_out.is_bigendian=0
+            image_out.step=1800
+            image_out.data = img.reshape(720000).tolist()
+            self.__image_output_pub.publish(image_out)
 
         return detections
 

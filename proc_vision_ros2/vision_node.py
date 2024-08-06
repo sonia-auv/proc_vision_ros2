@@ -22,8 +22,9 @@ MODELS = ['model-1-yolov8n.pt',
           'carriere_et_zac_v8.pt',
           'carriere_et_zac_v10.pt',
           'carriere_zac_denise_yucca_sim_v8.pt',
-          'carriere_zac_denise_yucca_v8.pt']
-MODEL_INDEX = 7
+          'carriere_zac_denise_yucca_v8.pt',
+          'carriere_zac_denise_yucca_sim_v10.pt']
+MODEL_INDEX = 9
 OUTPUT_DIR = 'output_ai/'
 SAVE_OUTPUT = False
 

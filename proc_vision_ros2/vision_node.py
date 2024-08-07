@@ -24,7 +24,7 @@ MODELS = ['model-1-yolov8n.pt',
           'carriere_zac_denise_yucca_sim_v8.pt',
           'carriere_zac_denise_yucca_v8.pt',
           'carriere_zac_denise_yucca_sim_v10.pt']
-MODEL_INDEX = 9
+MODEL_INDEX = 7
 OUTPUT_DIR = 'output_ai/'
 SAVE_OUTPUT = False
 PUBLISH_OUTPUT = True
@@ -119,8 +119,7 @@ class VisionNode():
             self.__classification_bottom_pub.publish(detection_array)
 
     def __img_detection(self, img):
-        
-        results = self.model(img, imgsz=[600, 400], conf=0.5, verbose=False)
+        results = self.model(img, imgsz=[608, 416], conf=0.5, verbose=False)
         detections = []
         for res in results:
             detection_count = res.boxes.shape[0]
@@ -148,14 +147,14 @@ class VisionNode():
                 if SAVE_OUTPUT or PUBLISH_OUTPUT:
                     cv2.putText(img, 
                                 name, 
-                                (int((x1+5)),
-                                int((y2-10)/2)), 
+                                (int((x1+1)),
+                                int((y1-10))), 
                                 cv2.FONT_HERSHEY_PLAIN, 
                                 .7, (0,0,255), 1, 1)
                     cv2.putText(img, 
                                 "{:.1f}%".format(res.boxes.conf[i].item()*100), 
-                                (int((x1+5)),
-                                int((y2+10)/2)), 
+                                (int((x1+1)),
+                                int((y1-1))), 
                                 cv2.FONT_HERSHEY_PLAIN, 
                                 .7, (0,0,255), 1, 1)
                     cv2.rectangle(img, 

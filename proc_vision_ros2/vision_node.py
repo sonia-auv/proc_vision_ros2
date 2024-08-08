@@ -29,7 +29,7 @@ MODELS = ['model-1-yolov8n.pt',
 MODEL_INDEX = 11
 OUTPUT_DIR = 'output_ai/'
 SAVE_OUTPUT = False
-PUBLISH_OUTPUT = True
+PUBLISH_OUTPUT = False
 INTERSECTION_TRESH = 0.10
 
 def iou(d1, d2):

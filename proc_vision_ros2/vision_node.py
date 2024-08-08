@@ -32,13 +32,13 @@ SAVE_OUTPUT = False
 PUBLISH_OUTPUT = True
 
 def iou(d1, d2):
-    xA = max(d1.left, d2.left)
-    yA = max(d1.top, d2.top)
-    xB = min(d1.right, d2.right)
-    yB = min(d1.bottom, d2.bottom)
-    inter = max(0, xB - xA + 1) * max(0, yB - yA + 1)
-    area1 = (d2.left - d1.left + 1) * (d2.top - d1.top + 1)
-    area2 = (d2.right - d1.right + 1) * (d2.bottom - d1.bottom + 1)
+    xA = max(d1[0], d2[0])
+    yA = max(d1[1], d2[1])
+    xB = min(d1[2], d2[2])
+    yB = min(d1[3], d2[3])
+    inter = max(0, xB - xA) * max(0, yB - yA)
+    area1 = (d1[2] - d1[0]) * (d1[3] - d1[1])
+    area2 = (d2[2] - d2[0]) * (d2[3] - d2[1])
     return (inter / float(area1 + area2 - inter))
 
 

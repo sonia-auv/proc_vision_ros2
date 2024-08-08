@@ -26,20 +26,20 @@ MODELS = ['model-1-yolov8n.pt',
           'carriere_zac_denise_yucca_sim_v10.pt',
           'robosub_v8_1.pt',
           'robosub_most_recent.pt']
-MODEL_INDEX = 11
+MODEL_INDEX = 7
 OUTPUT_DIR = 'output_ai/'
 SAVE_OUTPUT = False
 PUBLISH_OUTPUT = True
 INTERSECTION_TRESH = 0.10
 
 def iou(d1, d2):
-    xA = max(d1[0], d2[0])
-    yA = max(d1[1], d2[1])
-    xB = min(d1[2], d2[2])
-    yB = min(d1[3], d2[3])
-    inter = max(0, xB - xA) * max(0, yB - yA)
-    area1 = (d1[2] - d1[0]) * (d1[3] - d1[1])
-    area2 = (d2[2] - d2[0]) * (d2[3] - d2[1])
+    xA = max(d1.left, d2.left)
+    yA = max(d1.top, d2.top)
+    xB = min(d1.right, d2.right)
+    yB = min(d1.bottom, d2.bottom)
+    inter = max(0, xB - xA + 1) * max(0, yB - yA + 1)
+    area1 = (d1.right - d1.left + 1) * (d1.bottom - d1.top + 1)
+    area2 = (d2.right - d2.left + 1) * (d2.bottom - d2.top + 1)
     return (inter / float(area1 + area2 - inter))
 
 
@@ -103,8 +103,8 @@ class VisionNode():
             img[:,:,2] = temp
 
             detection_array = DetectionArray()
-            for detected_obj in self.__img_detection(img):
-                detection_array.detected_object.append(detected_obj, 'front')
+            for detected_obj in self.__img_detection(img, 'front'):
+                detection_array.detected_object.append(detected_obj)
             
             self.__classification_front_pub.publish(detection_array)
 

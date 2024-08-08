@@ -30,6 +30,7 @@ MODEL_INDEX = 11
 OUTPUT_DIR = 'output_ai/'
 SAVE_OUTPUT = False
 PUBLISH_OUTPUT = True
+INTERSECTION_TRESH = 0.10
 
 def iou(d1, d2):
     xA = max(d1[0], d2[0])
@@ -57,8 +58,8 @@ class VisionNode():
         self.__classification_front_pub = rospy.Publisher("proc_vision/front/classification", DetectionArray, queue_size=10)
         self.__classification_bottom_pub = rospy.Publisher("proc_vision/bottom/classification", DetectionArray, queue_size=10)
         self.__image_output_pub = rospy.Publisher("proc_vision/ai_output", Image, queue_size=10)
-        self.previous_front_results = [[], [], [], [], []]
-        self.previous_bottom_results = [[], [], [], [], []]
+        # self.previous_front_results = [[], [], [], [], []]
+        # self.previous_bottom_results = [[], [], [], [], []]
 
         if SAVE_OUTPUT:
             if not os.path.exists(OUTPUT_DIR):
@@ -137,65 +138,66 @@ class VisionNode():
         for d1 in detections:
             for d2 in detections:
                 if d1 != d2 and d1.cls == d2.cls:
-                    if iou(d1, d2) > .3:
+                    if iou(d1, d2) > INTERSECTION_TRESH:
                         if d1.conf < d2.conf:
                             detections.remove(d1)
                         else:
                             detections.remove(d2)
 
     def __img_detection(self, img, camera='front'):
-        results_now = self.model(img, imgsz=[608, 416], conf=0.5, verbose=False)
+        # results_now = self.model(img, imgsz=[608, 416], conf=0.5, verbose=False)
+        results = self.model(img, imgsz=[608, 416], conf=0.5, verbose=False)
         
         detections = []
-        if camera == 'front':
-            self.previous_front_results.insert(0, results_now)
-            self.previous_front_results.pop(len(self.previous_front_results)-1)
-            previous_results = self.previous_front_results
-        if camera == 'bottom':
-            self.previous_bottom_results.insert(0, results_now)
-            self.previous_bottom_results.pop(len(self.previous_bottom_results)-1)
-            previous_results = self.previous_bottom_results
-        for results in previous_results:
-            for res in results:
-                detection_count = res.boxes.shape[0]
-                for i in range(detection_count):
-                    cls = int(res.boxes.cls[i].item())
-                    name = res.names[cls]
-                    box = res.boxes.xyxy[i].cpu().numpy()
-                    x1 = box[0]
-                    y1 = box[1]
-                    x2 = box[2]
-                    y2 = box[3]
-                    w = x1 - x2
-                    h = y1 - y2
-                    items = ItemsRobosub()
-                    classification = Detection()
-                    classification.top = float(y1)
-                    classification.left = float(x1)
-                    classification.bottom = float(y2)
-                    classification.right = float(x2)
-                    classification.class_name = name
-                    classification.distance = float(items.get_dist(y2 - y1, name))
-                    classification.confidence = float(res.boxes.conf[i].item())
-                    detections.append(classification)
+        # if camera == 'front':
+        #     self.previous_front_results.insert(0, results_now)
+        #     self.previous_front_results.pop(len(self.previous_front_results)-1)
+        #     previous_results = self.previous_front_results
+        # if camera == 'bottom':
+        #     self.previous_bottom_results.insert(0, results_now)
+        #     self.previous_bottom_results.pop(len(self.previous_bottom_results)-1)
+        #     previous_results = self.previous_bottom_results
+        # for results in previous_results:
+        for res in results:
+            detection_count = res.boxes.shape[0]
+            for i in range(detection_count):
+                cls = int(res.boxes.cls[i].item())
+                name = res.names[cls]
+                box = res.boxes.xyxy[i].cpu().numpy()
+                x1 = box[0]
+                y1 = box[1]
+                x2 = box[2]
+                y2 = box[3]
+                w = x1 - x2
+                h = y1 - y2
+                items = ItemsRobosub()
+                classification = Detection()
+                classification.top = float(y1)
+                classification.left = float(x1)
+                classification.bottom = float(y2)
+                classification.right = float(x2)
+                classification.class_name = name
+                classification.distance = float(items.get_dist(y2 - y1, name))
+                classification.confidence = float(res.boxes.conf[i].item())
+                detections.append(classification)
 
-                    if SAVE_OUTPUT or PUBLISH_OUTPUT:
-                        cv2.putText(img, 
-                                    name, 
-                                    (int((x1+1)),
-                                    int((y1-10))), 
-                                    cv2.FONT_HERSHEY_PLAIN, 
-                                    .7, (0,0,255), 1, 1)
-                        cv2.putText(img, 
-                                    "{:.1f}%".format(res.boxes.conf[i].item()*100), 
-                                    (int((x1+1)),
-                                    int((y1-1))), 
-                                    cv2.FONT_HERSHEY_PLAIN, 
-                                    .7, (0,0,255), 1, 1)
-                        cv2.rectangle(img, 
-                                    (int(x1),int(y1)), 
-                                    (int(x2),int(y2)), 
-                                    (0,0,255), 1)
+                if SAVE_OUTPUT or PUBLISH_OUTPUT:
+                    cv2.putText(img, 
+                                name, 
+                                (int((x1+1)),
+                                int((y1-10))), 
+                                cv2.FONT_HERSHEY_PLAIN, 
+                                .7, (0,0,255), 1, 1)
+                    cv2.putText(img, 
+                                "{:.1f}%".format(res.boxes.conf[i].item()*100), 
+                                (int((x1+1)),
+                                int((y1-1))), 
+                                cv2.FONT_HERSHEY_PLAIN, 
+                                .7, (0,0,255), 1, 1)
+                    cv2.rectangle(img, 
+                                (int(x1),int(y1)), 
+                                (int(x2),int(y2)), 
+                                (0,0,255), 1)
                      
         if SAVE_OUTPUT and detection_count != 0:
             cv2.imwrite(OUTPUT_DIR+'pred_'+str(int(1000*time()))+'.jpg', 

@@ -1,22 +1,23 @@
 # Constante de conversion pour la caméra
-constante_camera: 0.0017
+constante_camera: 0.00166 # AUV7
+# constante_camera: 0.00166 # AUV8
 
 # Largeur et hauteur en mètres de chaque items
 bin: 
   w: .610
   h: .914
 bin_rouge: 
-  w: .302
-  h: .302
+  w: .3048
+  h: .3048
 bin_bleue: 
-  w: .302
-  h: .302
+  w: .3048
+  h: .3048
 gate_rouge: 
-  w: .302
-  h: .302
+  w: .3048
+  h: .3048
 gate_bleue: 
-  w: .302
-  h: .302
+  w: .3048
+  h: .3048
 gate: 
   w: 3.048
   h: 1.524
@@ -30,18 +31,18 @@ path:
   w: .1524
   h: 1.067
 torpille:
-  w: .7
-  h: .7
+  w: .6
+  h: .6
 torpille_target:
   1: 
-    w: .101
-    h: .101
+    w: .102
+    h: .102
   2: 
-    w: .126
-    h: .126
+    w: .128
+    h: .128
   3: 
-    w: .15
-    h: .15
+    w: .153
+    h: .153
   4: 
-    w: .177
-    h: .177
+    w: .178
+    h: .178

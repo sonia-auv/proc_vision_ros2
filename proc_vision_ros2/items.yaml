@@ -1,6 +1,6 @@
 # Constante de conversion pour la caméra
-constante_camera: 0.00166 # AUV7
-# constante_camera: 0.00166 # AUV8
+# constante_camera: 0.00166 # AUV7
+constante_camera: 0.00138 # AUV8
 
 # Largeur et hauteur en mètres de chaque items
 bin: 

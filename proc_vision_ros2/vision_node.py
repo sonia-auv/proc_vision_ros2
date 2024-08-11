@@ -25,8 +25,9 @@ MODELS = ['model-1-yolov8n.pt',
           'carriere_zac_denise_yucca_v8.pt',
           'carriere_zac_denise_yucca_sim_v10.pt',
           'robosub_v8_1.pt',
-          'robosub_most_recent.pt']
-MODEL_INDEX = 11
+          'robosub_most_recent.pt',
+          'robosub_24_zac.pt']
+MODEL_INDEX = 12
 OUTPUT_DIR = 'output_ai/'
 SAVE_OUTPUT = False
 PUBLISH_OUTPUT = False

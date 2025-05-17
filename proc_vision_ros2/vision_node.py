@@ -8,7 +8,7 @@ import numpy as np
 import cv2
 import os
 from time import time
-from sonia_common_ros2.msg import Detection
+from sonia_common_ros2.msg import Detection, DetectionArray
 from sonia_common_ros2.srv import AiActivationService
 
 # MODEL_DIR = '/home/sonia/ssd/ros2_sonia_ws/src/proc_vision_ros2/models/'
@@ -31,8 +31,8 @@ class VisionNode(Node):
         model_bottom_name = self.get_parameter("models").get_parameter_value().string_array_value[1]
         self.model_front = YOLO(os.path.join(MODEL_DIR, model_front_name))
         self.model_bottom = YOLO(os.path.join(MODEL_DIR, model_bottom_name))
-        self.__classif_front_pub = self.create_publisher(Detection, "proc_vision/front/classif", 10)
-        self.__classif_bottom_pub = self.create_publisher(Detection, "proc_vision/bottom/classif", 10)
+        self.__classif_front_pub = self.create_publisher(DetectionArray, "proc_vision/front/classif", 10)
+        self.__classif_bottom_pub = self.create_publisher(DetectionArray, "proc_vision/bottom/classif", 10)
         if SAVE_OUTPUT:
             if not os.path.exists(OUTPUT_DIR):
                 os.makedirs(OUTPUT_DIR)
@@ -101,27 +101,30 @@ class VisionNode(Node):
         classif.confidence = float(result.obb.conf[i].item())
         return classif
 
-    def __img_detection(self, msg: Image, model: YOLO):
+    def __img_detection(self, msg: Image, model: YOLO) -> DetectionArray:
         # TODO check and manage case with rgbxyz images
         img = np.array(msg.data).reshape((400,600,3))
         results = model(img, imgsz=[600, 400], conf=0.5, verbose=False)
-        detections = []
+        detections = DetectionArray()
+        detections.detected_object = []
         for res in results:
             detection_count = res.boxes.shape[0]
             for i in range(detection_count):
                 cls = int(res.boxes.cls[i].item())
                 name = res.names[cls]
-                # TODO
-                if res.boxes is not None:
-                    classif = self.__manage_boxes(i, res)
-                else:
-                    classif = self.__manage_oriented_boxes(i, res)
                 classif = Detection()
-                classif.classif = name
+                if res.boxes is not None:
+                    classif = self.__manage_boxes(i, res, classif)
+                else:
+                    classif = self.__manage_oriented_boxes(i, res, classif)
+                classif.class_name = name
                 # TODO
                 # if image_stereo:
                 #     classif.distance = np.median()
-                detections.append(classif)
+                # else:
+                #     classif.distance = 0
+                classif.distance = 0
+                detections.detected_object.append(classif)
 
                 if SAVE_OUTPUT:
                     cv2.putText(img, 

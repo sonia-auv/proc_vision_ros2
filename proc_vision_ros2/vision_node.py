@@ -118,25 +118,27 @@ class VisionNode(Node):
                     classif = self.__manage_oriented_boxes(i, res)
                 classif = Detection()
                 classif.classif = name
-                # classif.distance = np.median() TODO
+                # TODO
+                # if image_stereo:
+                #     classif.distance = np.median()
                 detections.append(classif)
 
                 if SAVE_OUTPUT:
                     cv2.putText(img, 
                                 name, 
-                                (int((x1+5)),
-                                int((y2-10)/2)), 
+                                (int((classif.top_left_x+5)),
+                                int((classif.bottom_right_y-10)/2)), 
                                 cv2.FONT_HERSHEY_PLAIN, 
                                 .7, (0,0,255), 1, 1)
                     cv2.putText(img, 
                                 "{:.1f}%".format(classif.confidence), 
-                                (int((x1+5)),
-                                int((y2+10)/2)), 
+                                (int((classif.top_left_x+5)),
+                                int((classif.bottom_right_y+10)/2)), 
                                 cv2.FONT_HERSHEY_PLAIN, 
                                 .7, (0,0,255), 1, 1)
                     cv2.rectangle(img, 
-                                (int(x1),int(y1)), 
-                                (int(x2),int(y2)), 
+                                (int(classif.top_left_x),int(classif.top_left_y)), 
+                                (int(classif.bottom_right_x),int(classif.bottom_right_y)), 
                                 (0,0,255), 1)
                     cv2.imwrite(OUTPUT_DIR+'pred_'+str(int(1000*time()))+'.jpg', 
                                 img) 

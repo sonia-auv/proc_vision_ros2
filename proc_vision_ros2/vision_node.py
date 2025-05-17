@@ -10,7 +10,6 @@ import os
 from time import time
 from sonia_common_ros2.msg import Detection
 from sonia_common_ros2.srv import AiActivationService
-from .items_robosub import ItemsRobosub
 
 # MODEL_DIR = '/home/sonia/ssd/ros2_sonia_ws/src/proc_vision_ros2/models/'
 # OUTPUT_DIR = '/home/sonia/ssd/output_ai/'

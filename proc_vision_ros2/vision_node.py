@@ -10,11 +10,11 @@ from .yolov8 import YOLOv8
 from sonia_common_ros2.msg import DetectionArray
 from sonia_common_ros2.srv import AiActivationService
 
-# MODEL_DIR = '/home/sonia/ssd/ros2_sonia_ws/src/proc_vision_ros2/models/'
-# OUTPUT_DIR = '/home/sonia/ssd/output_ai/'
-MODEL_DIR = '/home/sonia/ros2_sonia_ws/src/proc_vision_ros2/models/'
-OUTPUT_DIR = '/home/sonia/output_ai/'
-SAVE_OUTPUT = True
+MODEL_DIR = '/home/sonia/ssd/ros2_sonia_ws/src/proc_vision_ros2/models/'
+OUTPUT_DIR = '/home/sonia/ssd/output_ai/'
+# MODEL_DIR = '/home/sonia/ros2_sonia_ws/src/proc_vision_ros2/models/'
+# OUTPUT_DIR = '/home/sonia/output_ai/'
+SAVE_OUTPUT = False
 
 
 class VisionNode(Node):

@@ -1,8 +1,6 @@
-# Ultralytics 🚀 AGPL-3.0 License - https://ultralytics.com/license
 
-import argparse
 from typing import List, Tuple
-
+import os
 import cv2
 import numpy as np
 import onnxruntime as ort
@@ -53,14 +51,14 @@ class YOLOv8:
             confidence_thres (float): Confidence threshold for filtering detections.
             iou_thres (float): IoU threshold for non-maximum suppression.
         """
-        self.onnx_model = "models/"+onnx_model+"/"+onnx_model+".onnx"
+        self.onnx_model = onnx_model+"/model.onnx"
         self.input_image = None
         self.draw = False
         self.confidence_thres = confidence_thres
         self.iou_thres = iou_thres
 
         # Load the class names from the COCO dataset
-        with open("models/"+onnx_model+"/data.yaml", 'r') as stream:
+        with open(onnx_model+"/data.yaml", 'r') as stream:
             self.classes = yaml.safe_load(stream)["names"]
         # Generate a color palette for the classes
         self.color_palette = np.random.uniform(0, 255, size=(len(self.classes), 3))
@@ -274,4 +272,3 @@ class YOLOv8:
 
         # Perform post-processing on the outputs to obtain output image
         return self.postprocess(self.img, outputs, pad)
-

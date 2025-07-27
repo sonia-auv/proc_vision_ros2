@@ -2,6 +2,7 @@
   ros__parameters:
 
     models: [
+      "model-test-1",
       "model-1-yolov8n.pt",
       "model-2-yolov8n.pt",
       "yolov10-1-700.pt"

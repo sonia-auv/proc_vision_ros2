@@ -6,15 +6,16 @@ from sensor_msgs.msg import Image
 # from ultralytics import YOLO
 import numpy as np
 import os
-from yolov8 import YOLOv8
+from .yolov8 import YOLOv8
 from sonia_common_ros2.msg import DetectionArray
 from sonia_common_ros2.srv import AiActivationService
 
 # MODEL_DIR = '/home/sonia/ssd/ros2_sonia_ws/src/proc_vision_ros2/models/'
 # OUTPUT_DIR = '/home/sonia/ssd/output_ai/'
-MODEL_DIR = '/home/sonia2/ros2_sonia_ws/src/proc_vision_ros2/models/'
-OUTPUT_DIR = '/home/sonia2/output_ai/'
+MODEL_DIR = '/home/sonia/ros2_sonia_ws/src/proc_vision_ros2/models/'
+OUTPUT_DIR = '/home/sonia/output_ai/'
 SAVE_OUTPUT = True
+
 
 class VisionNode(Node):
 
@@ -26,8 +27,8 @@ class VisionNode(Node):
         self.__ai_activation_sub = self.create_service(AiActivationService, "proc_vision/ai_activation", self.__ai_activation_callback)
         self.__front_cam_sub = self.create_subscription(Image, "camera_array/front/image_raw/compressed", self.__img_front_callback, 10)
         self.__bottom_cam_sub = self.create_subscription(Image, "camera_array/bottom/image_raw", self.__img_bottom_callback, 10)
-        model_front_name = self.get_parameter("models").get_parameter_value().string_array_value[1]
-        model_bottom_name = self.get_parameter("models").get_parameter_value().string_array_value[1]
+        model_front_name = self.get_parameter("models").get_parameter_value().string_array_value[0]
+        model_bottom_name = self.get_parameter("models").get_parameter_value().string_array_value[0]
         self.model_front = YOLOv8(os.path.join(MODEL_DIR, model_front_name))
         self.model_bottom = YOLOv8(os.path.join(MODEL_DIR, model_bottom_name))
         self.__classif_front_pub = self.create_publisher(DetectionArray, "proc_vision/front/classif", 10)

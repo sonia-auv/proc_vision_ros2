@@ -232,6 +232,7 @@ class YOLOv8:
             classif.bottom_left_y = float(box[1])
             classif.confidence = float(scores[i])
             classif.class_name = self.classes[class_ids[i]]
+            classif.frame_id = self.frame_id
             
             classif.distance = float(0)
             detections.detected_object.append(classif)
@@ -246,7 +247,7 @@ class YOLOv8:
         # Return the results
         return detections
 
-    def detect(self, image) -> np.ndarray:
+    def detect(self, image:np.ndarray, frame_id:str) -> np.ndarray:
         """
         Perform inference using an ONNX model and return the output image with drawn detections.
 
@@ -254,6 +255,7 @@ class YOLOv8:
             (np.ndarray): The output image with drawn detections.
         """
         self.input_image = image
+        self.frame_id = frame_id
 
         # Get the model inputs
         model_inputs = self.session.get_inputs()

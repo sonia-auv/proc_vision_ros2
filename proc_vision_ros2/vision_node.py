@@ -89,4 +89,4 @@ class VisionNode(Node):
             self.__classif_bottom_pub.publish(self.__img_detection(msg, self.model_bottom))
 
     def __img_detection(self, msg: Image, model: YOLOv8) -> DetectionArray:
-        return model.detect(cv2.imdecode(np.frombuffer(msg.data, np.uint8), cv2.IMREAD_COLOR))
+        return model.detect(cv2.imdecode(np.frombuffer(msg.data, np.uint8), cv2.IMREAD_COLOR), msg.header.frame_id)

@@ -137,10 +137,10 @@ class YOLOv8:
         """
 
         # Get the height and width of the input image
-        self.img_height, self.img_width = self.img.shape[:2]
+        self.img_height, self.img_width = self.input_image.shape[:2]
 
         # Convert the image color space from BGR to RGB
-        img = cv2.cvtColor(self.img, cv2.COLOR_BGR2RGB)
+        img = cv2.cvtColor(self.input_image, cv2.COLOR_BGR2RGB)
 
         img, pad = self.letterbox(img, (self.input_width, self.input_height))
 
@@ -156,7 +156,7 @@ class YOLOv8:
         # Return the preprocessed image data
         return image_data, pad
 
-    def postprocess(self, input_image: np.ndarray, output: List[np.ndarray], pad: Tuple[int, int]) -> np.ndarray:
+    def postprocess(self, input_image: np.ndarray, output: List[np.ndarray], pad: Tuple[int, int]) -> DetectionArray:
         """
         Perform post-processing on the model's output to extract and visualize detections.
 
@@ -214,6 +214,8 @@ class YOLOv8:
                 scores.append(max_score)
                 boxes.append([left, top, width, height])
 
+        if len(boxes) == 0:
+            return None
         # Apply non-maximum suppression to filter out overlapping bounding boxes
         indices = cv2.dnn.NMSBoxes(boxes, scores, self.confidence_thres, self.iou_thres)
 
@@ -245,7 +247,7 @@ class YOLOv8:
                 self.draw_detections(input_image, box, score, class_id)
 
         # Return the results
-        return None
+        return detections
 
     def detect(self, image) -> np.ndarray:
         """
@@ -271,4 +273,4 @@ class YOLOv8:
         outputs = self.session.run(None, {model_inputs[0].name: img_data})
 
         # Perform post-processing on the outputs to obtain output image
-        return self.postprocess(self.img, outputs, pad)
+        return self.postprocess(self.input_image, outputs, pad)

@@ -64,7 +64,7 @@ class YOLOv8:
         self.color_palette = np.random.uniform(0, 255, size=(len(self.classes), 3))
 
         # Create an inference session using the ONNX model and specify execution providers
-        self.session = ort.InferenceSession(self.onnx_model, providers=["CUDAExecutionProvider", "CPUExecutionProvider"])
+        self.session = ort.InferenceSession(self.onnx_model, providers=["CUDAExecutionProvider"])#, "CPUExecutionProvider"])
 
     def letterbox(self, img: np.ndarray, new_shape: Tuple[int, int] = (640, 640)) -> Tuple[np.ndarray, Tuple[int, int]]:
         """
@@ -211,36 +211,33 @@ class YOLOv8:
 
                 # Add the class ID, score, and box coordinates to the respective lists
                 class_ids.append(class_id)
-                scores.append(max_score)
+                scores.append(float(max_score))
                 boxes.append([left, top, width, height])
 
-        if len(boxes) == 0:
-            return None
+
         # Apply non-maximum suppression to filter out overlapping bounding boxes
-        indices = cv2.dnn.NMSBoxes(boxes, scores, self.confidence_thres, self.iou_thres)
 
         detections = DetectionArray()
         detections.detected_object = []
         # Iterate over the selected indices after non-maximum suppression
-        for i in indices:
+        for i, box in enumerate(boxes):
             classif = Detection()
-            classif.top_left_x = float(boxes[i][0])
-            classif.top_left_y = float(boxes[i][1])
-            classif.top_right_x = float(boxes[i][0])
-            classif.top_right_y = float(boxes[i][3])
-            classif.bottom_right_x = float(boxes[i][2])
-            classif.bottom_right_y = float(boxes[i][3])
-            classif.bottom_left_x = float(boxes[i][2])
-            classif.bottom_left_y = float(boxes[i][1])
+            classif.top_left_x = float(box[0])
+            classif.top_left_y = float(box[1])
+            classif.top_right_x = float(box[0])
+            classif.top_right_y = float(box[3])
+            classif.bottom_right_x = float(box[2])
+            classif.bottom_right_y = float(box[3])
+            classif.bottom_left_x = float(box[2])
+            classif.bottom_left_y = float(box[1])
             classif.confidence = float(scores[i])
             classif.class_name = self.classes[class_ids[i]]
             
-            classif.distance = 0
+            classif.distance = float(0)
             detections.detected_object.append(classif)
             
             if self.draw:
                 # Get the box, score, and class ID corresponding to the index
-                box = boxes[i]
                 score = scores[i]
                 class_id = class_ids[i]
                 # Draw the detection on the input image

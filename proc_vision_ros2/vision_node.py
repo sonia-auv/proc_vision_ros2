@@ -76,14 +76,14 @@ class VisionNode(Node):
             self.camera_bottom = False
         
         if self.camera_front:
-            self.get_logger().info(f"Front model ON : {model_name}")
+            self.get_logger().info(f"Front ON -> Model : {model_name}")
         else:
-            self.get_logger().info(f"Front model OFF")
+            self.get_logger().info(f"Front OFF")
 
         if self.camera_bottom:
-            self.get_logger().info(f"Bottom model ON : {model_name}")
+            self.get_logger().info(f"Bottom ON -> Model : {model_name}")
         else:
-            self.get_logger().info(f"Bottom model OFF")
+            self.get_logger().info(f"Bottom OFF")
 
         return response
 

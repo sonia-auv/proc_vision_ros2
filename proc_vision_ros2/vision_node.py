@@ -102,9 +102,13 @@ class VisionNode(Node):
     def __depth_front_callback(self, msg: Image):
         if self.camera_front:
             self.get_logger().info(f"Depth {msg.header.frame_id} received!!")
-            depth = cv2.imdecode(np.frombuffer(msg.data, np.uint8), cv2.IMREAD_GRAYSCALE)
+            depth_raw = np.frombuffer(msg.data, np.uint8)
+            depth = cv2.imdecode(depth_raw, cv2.IMREAD_GRAYSCALE)
+            depth2 = cv2.imdecode(depth_raw, cv2.IMREAD_ANYDEPTH)
             if depth is not None:
                 self.get_logger().info(f"Depth image max: {depth.max()}, min: {depth.min()}, mean: {depth.mean()}")
+            if depth2 is not None:
+                self.get_logger().info(f"Depth2 image max: {depth2.max()}, min: {depth2.min()}, mean: {depth2.mean()}")
 
     def __img_detection(self, msg: Image, model: YOLOv8) -> DetectionArray:
         return model.detect(cv2.imdecode(np.frombuffer(msg.data, np.uint8), cv2.IMREAD_COLOR), msg.header.frame_id)

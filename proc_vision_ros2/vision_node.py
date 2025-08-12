@@ -4,7 +4,6 @@ sys.path.append("/home/sonia/ssd/pip_pkg")
 from rclpy.node import Node
 from rclpy.parameter import Parameter
 from sensor_msgs.msg import Image, CompressedImage
-# from ultralytics import YOLO
 import numpy as np
 import os
 import cv2
@@ -35,7 +34,7 @@ class VisionNode(Node):
 
         self.__front_cam_sub = self.create_subscription(CompressedImage, "zed/zed_node/left/image_rect_color/compressed", self.__img_front_callback, 10)
         self.__front_cam_sim = self.create_subscription(CompressedImage, "proc_simulation/front/compressed", self.__img_front_callback, 10)
-        self.__front_cam_depth = self.create_subscription(Image, "zed/zed_node/depth/depth_registered", self.__depth_front_callback, 10)
+        # self.__front_cam_depth = self.create_subscription(Image, "zed/zed_node/depth/depth_registered", self.__depth_front_callback, 10)
         
         self.__bottom_cam_sub = self.create_subscription(Image, "camera_array/bottom/image_raw", self.__img_bottom_callback, 10)
         self.__bottom_cam_sim = self.create_subscription(CompressedImage, "proc_simulation/bottom/compressed", self.__img_bottom_callback, 10)
@@ -99,17 +98,17 @@ class VisionNode(Node):
             self.get_logger().info("Image Bottom received!!")
             self.__classif_bottom_pub.publish(self.__img_detection(msg, self.model_bottom))
 
-    def __depth_front_callback(self, msg: Image):
-        if self.camera_front:
-            self.get_logger().info(f"Depth {msg.header.frame_id} received!!")
-            depth_raw = np.frombuffer(msg.data, np.uint8)
-            depth = cv2.imdecode(depth_raw, cv2.IMREAD_GRAYSCALE)
-            depth2 = cv2.imdecode(depth_raw, cv2.IMREAD_ANYDEPTH)
-            self.get_logger().info(f"depth_raw shape: {depth_raw.shape}, dtype: {depth_raw.dtype}")
-            if depth is not None:
-                self.get_logger().info(f"Depth image max: {depth.max()}, min: {depth.min()}, mean: {depth.mean()}")
-            if depth2 is not None:
-                self.get_logger().info(f"Depth2 image max: {depth2.max()}, min: {depth2.min()}, mean: {depth2.mean()}")
+    # def __depth_front_callback(self, msg: Image):
+    #     if self.camera_front:
+    #         self.get_logger().info(f"Depth {msg.header.frame_id} received!!")
+    #         depth_raw = np.frombuffer(msg.data, np.uint8)
+    #         depth = cv2.imdecode(depth_raw, cv2.IMREAD_GRAYSCALE)
+    #         depth2 = cv2.imdecode(depth_raw, cv2.IMREAD_ANYDEPTH)
+    #         self.get_logger().info(f"depth_raw shape: {depth_raw.shape}, dtype: {depth_raw.dtype}")
+    #         if depth is not None:
+    #             self.get_logger().info(f"Depth image max: {depth.max()}, min: {depth.min()}, mean: {depth.mean()}")
+    #         if depth2 is not None:
+    #             self.get_logger().info(f"Depth2 image max: {depth2.max()}, min: {depth2.min()}, mean: {depth2.mean()}")
 
     def __img_detection(self, msg: Image, model: YOLOv8) -> DetectionArray:
         return model.detect(cv2.imdecode(np.frombuffer(msg.data, np.uint8), cv2.IMREAD_COLOR), msg.header.frame_id)

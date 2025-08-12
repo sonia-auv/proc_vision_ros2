@@ -2,10 +2,8 @@
   ros__parameters:
 
     models: [
-      "model-test-1",
-      "model-1-yolov8n.pt",
-      "model-2-yolov8n.pt",
-      "yolov10-1-700.pt"
+      "robosub-2025-v1",
+      "model-test-1"
       ]
 
     # Largeur et hauteur en mètres de chaque items

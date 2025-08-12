@@ -37,7 +37,7 @@ class VisionNode(Node):
         self.__front_cam_sim = self.create_subscription(CompressedImage, "proc_simulation/front/compressed", self.__img_front_callback, 10)
         self.__front_cam_depth = self.create_subscription(Image, "zed/zed_node/depth/depth_registered", self.__depth_front_callback, 10)
         
-        self.__bottom_cam_sub = self.create_subscription(CompressedImage, "camera_array/bottom/image_raw", self.__img_bottom_callback, 10)
+        self.__bottom_cam_sub = self.create_subscription(Image, "camera_array/bottom/image_raw", self.__img_bottom_callback, 10)
         self.__bottom_cam_sim = self.create_subscription(CompressedImage, "proc_simulation/bottom/compressed", self.__img_bottom_callback, 10)
 
         model_front_name = self.get_parameter("models").get_parameter_value().string_array_value[0]
@@ -89,7 +89,7 @@ class VisionNode(Node):
 
         return response
 
-    def __img_front_callback(self, msg: Image):
+    def __img_front_callback(self, msg: CompressedImage):
         if self.camera_front:
             self.get_logger().info(f"Image front {msg.header.frame_id} received!!")
             self.__classif_front_pub.publish(self.__img_detection(msg, self.model_front))
@@ -101,9 +101,10 @@ class VisionNode(Node):
 
     def __depth_front_callback(self, msg: Image):
         if self.camera_front:
-            self.get_logger().info("Depth {msg.header.frame_id} received!!")
-            depth = cv2.imdecode(np.frombuffer(msg.data, np.uint8), cv2.IMREAD_UNCHANGED)
-            self.get_logger().info(f"Depth image max: {depth.max()}, min: {depth.min()}, mean: {depth.mean()}")
+            self.get_logger().info(f"Depth {msg.header.frame_id} received!!")
+            depth = cv2.imdecode(np.frombuffer(msg.data, np.uint8), cv2.IMREAD_GRAYSCALE)
+            if depth is not None:
+                self.get_logger().info(f"Depth image max: {depth.max()}, min: {depth.min()}, mean: {depth.mean()}")
 
     def __img_detection(self, msg: Image, model: YOLOv8) -> DetectionArray:
         return model.detect(cv2.imdecode(np.frombuffer(msg.data, np.uint8), cv2.IMREAD_COLOR), msg.header.frame_id)

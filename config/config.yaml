@@ -1,0 +1,6 @@
+/vision_node:
+  ros__parameters:
+
+    models: [
+      "robosub-2025-v0"
+      ]

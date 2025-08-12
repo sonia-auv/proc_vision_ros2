@@ -105,6 +105,7 @@ class VisionNode(Node):
             depth_raw = np.frombuffer(msg.data, np.uint8)
             depth = cv2.imdecode(depth_raw, cv2.IMREAD_GRAYSCALE)
             depth2 = cv2.imdecode(depth_raw, cv2.IMREAD_ANYDEPTH)
+            self.get_logger().info(f"depth_raw shape: {depth_raw.shape}, dtype: {depth_raw.dtype}")
             if depth is not None:
                 self.get_logger().info(f"Depth image max: {depth.max()}, min: {depth.min()}, mean: {depth.mean()}")
             if depth2 is not None:

@@ -35,6 +35,7 @@ class VisionNode(Node):
 
         self.__front_cam_sub = self.create_subscription(CompressedImage, "zed/zed_node/left/image_rect_color/compressed", self.__img_front_callback, 10)
         self.__front_cam_sim = self.create_subscription(CompressedImage, "proc_simulation/front/compressed", self.__img_front_callback, 10)
+        self.__front_cam_depth = self.create_subscription(CompressedImage, "zed/zed_node/depth/depth_registered/compressed", self.__depth_front_callback, 10)
         
         self.__bottom_cam_sub = self.create_subscription(CompressedImage, "camera_array/bottom/image_raw", self.__img_bottom_callback, 10)
         self.__bottom_cam_sim = self.create_subscription(CompressedImage, "proc_simulation/bottom/compressed", self.__img_bottom_callback, 10)
@@ -49,7 +50,7 @@ class VisionNode(Node):
             if not os.path.exists(OUTPUT_DIR):
                 os.makedirs(OUTPUT_DIR)
         self.get_logger().info("Vision node initialized")
-        self.get_logger().debug(f"Available providers: {self.model_front.available_providers()}")
+        self.get_logger().info(f"Available providers: {self.model_front.available_providers()}")
 
 
     def __ai_activation_callback(self, request, response):
@@ -90,13 +91,19 @@ class VisionNode(Node):
 
     def __img_front_callback(self, msg: Image):
         if self.camera_front:
-            self.get_logger().debug("IMG FRONT received!!")
+            self.get_logger().info(f"Image front {msg.header.frame_id} received!!")
             self.__classif_front_pub.publish(self.__img_detection(msg, self.model_front))
 
     def __img_bottom_callback(self, msg: Image):
         if self.camera_bottom:
-            self.get_logger().debug("IMG BOTTOM received!!")
+            self.get_logger().info("Image Bottom received!!")
             self.__classif_bottom_pub.publish(self.__img_detection(msg, self.model_bottom))
+
+    def __depth_front_callback(self, msg: Image):
+        if self.camera_front:
+            self.get_logger().info("Depth {msg.header.frame_id} received!!")
+            depth = cv2.imdecode(np.frombuffer(msg.data, np.uint8), cv2.IMREAD_UNCHANGED)
+            self.get_logger().info(f"Depth image max: {depth.max()}, min: {depth.min()}, mean: {depth.mean()}")
 
     def __img_detection(self, msg: Image, model: YOLOv8) -> DetectionArray:
         return model.detect(cv2.imdecode(np.frombuffer(msg.data, np.uint8), cv2.IMREAD_COLOR), msg.header.frame_id)

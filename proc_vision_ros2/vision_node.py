@@ -48,7 +48,8 @@ class VisionNode(Node):
         if SAVE_OUTPUT:
             if not os.path.exists(OUTPUT_DIR):
                 os.makedirs(OUTPUT_DIR)
-        self.get_logger().info("VISION NODE INITIALIZED !!")
+        self.get_logger().info("Vision node initialized")
+        self.get_logger().debug(f"Available providers: {self.model_front.available_providers()}")
 
 
     def __ai_activation_callback(self, request, response):

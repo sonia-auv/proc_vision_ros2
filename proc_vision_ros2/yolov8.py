@@ -273,3 +273,6 @@ class YOLOv8:
 
         # Perform post-processing on the outputs to obtain output image
         return self.postprocess(self.input_image, outputs, pad)
+
+    def available_providers(self) -> List[str]:
+        return ort.get_available_providers()

@@ -2,7 +2,7 @@ import os
 from ament_index_python.packages import get_package_share_directory
 
 from launch import LaunchDescription
-from launch_ros.actions import Node
+from launch_ros.actions import Node, DeclareLaunchArgument
 
 
 def generate_launch_description():
@@ -12,6 +12,11 @@ def generate_launch_description():
     )
     return LaunchDescription(
         [
+            DeclareLaunchArgument(
+                "log_level",
+                default_value=["debug"],
+                description="Logging level",
+            ),
             Node(
                 package="proc_vision_ros2",
                 executable="proc_vision_ros2",

@@ -52,40 +52,49 @@ class VisionNode(Node):
 
 
     def __ai_activation_callback(self, request, response):
+        model_list = self.get_parameter("models").get_parameter_value().string_array_value
+        if request.model_choice >= 0 and request.model_choice < len(model_list):
+            model_name = model_list[request.model_choice]
+        else:
+            model_name = model_list[0]
+
         if request.camera_choice == AiActivationService.Request.FRONT:
             self.camera_front = True
             self.camera_bottom = False
-            if request.model_choice >= 0:
-                model_name = self.get_parameter("models").get_parameter_value().string_array_value[request.model_choice]
-                self.model_front = YOLOv8(os.path.join(MODEL_DIR, model_name))
+            self.model_front = YOLOv8(os.path.join(MODEL_DIR, model_name))
         elif request.camera_choice == AiActivationService.Request.BOTTOM:
             self.camera_front = False
             self.camera_bottom = True
-            if request.model_choice >= 0:
-                model_name = self.get_parameter("models").get_parameter_value().string_array_value[request.model_choice]
-                self.model_bottom = YOLOv8(os.path.join(MODEL_DIR, model_name))
+            self.model_bottom = YOLOv8(os.path.join(MODEL_DIR, model_name))
         elif request.camera_choice == AiActivationService.Request.BOTH:
             self.camera_front = True
             self.camera_bottom = True
-            if request.model_choice >= 0:
-                model_name = self.get_parameter("models").get_parameter_value().string_array_value[request.model_choice]
-                self.model_front = YOLOv8(os.path.join(MODEL_DIR, model_name))
-                self.model_bottom = YOLOv8(os.path.join(MODEL_DIR, model_name))
+            self.model_front = YOLOv8(os.path.join(MODEL_DIR, model_name))
+            self.model_bottom = YOLOv8(os.path.join(MODEL_DIR, model_name))
         else:
             self.camera_front = False
             self.camera_bottom = False
+        
+        if self.camera_front:
+            self.get_logger().info(f"Front model ON : {model_name}")
+        else:
+            self.get_logger().info(f"Front model OFF")
+
+        if self.camera_bottom:
+            self.get_logger().info(f"Bottom model ON : {model_name}")
+        else:
+            self.get_logger().info(f"Bottom model OFF")
 
         return response
 
     def __img_front_callback(self, msg: Image):
         if self.camera_front:
-            self.get_logger().info("IMG FRONT received!!")
-            # for detected_obj in self.__img_detection(msg, self.model_front):
+            self.get_logger().debug("IMG FRONT received!!")
             self.__classif_front_pub.publish(self.__img_detection(msg, self.model_front))
 
     def __img_bottom_callback(self, msg: Image):
         if self.camera_bottom:
-            self.get_logger().info("IMG BOTTOM received!!")
+            self.get_logger().debug("IMG BOTTOM received!!")
             self.__classif_bottom_pub.publish(self.__img_detection(msg, self.model_bottom))
 
     def __img_detection(self, msg: Image, model: YOLOv8) -> DetectionArray:

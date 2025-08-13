@@ -110,5 +110,6 @@ class VisionNode(Node):
     #         if depth2 is not None:
     #             self.get_logger().info(f"Depth2 image max: {depth2.max()}, min: {depth2.min()}, mean: {depth2.mean()}")
 
-    def __img_detection(self, msg: Image, model: YOLOv8) -> DetectionArray:
-        return model.detect(cv2.imdecode(np.frombuffer(msg.data, np.uint8), cv2.IMREAD_COLOR), msg.header.frame_id)
+    def __img_detection(self, msg: CompressedImage, model: YOLOv8) -> DetectionArray:
+        image = cv2.imdecode(np.frombuffer(msg.data, np.uint8), cv2.IMREAD_COLOR)
+        return model.detect(image, msg.header.frame_id)

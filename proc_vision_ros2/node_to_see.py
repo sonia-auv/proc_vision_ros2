@@ -1,7 +1,7 @@
 
 from rclpy.node import Node
 from rclpy.parameter import Parameter
-from sensor_msgs.msg import Image
+from sensor_msgs.msg import Image, CompressedImage
 # from ultralytics import YOLO
 import numpy as np
 import os
@@ -19,7 +19,7 @@ class NodeTosee(Node):
 
     def __init__(self):
         self.declare_parameter("models", Parameter.Type.STRING_ARRAY)
-        self.__front_cam_sub = self.create_subscription(Image, "camera_array/front/image_raw/compressed", self.__img_front_callback, 10)
+        self.__front_cam_sub = self.create_subscription(CompressedImage, "camera_array/front/image_raw/compressed", self.__img_front_callback, 10)
         self.__bottom_cam_sub = self.create_subscription(Image, "camera_array/bottom/image_raw", self.__img_bottom_callback, 10)
         self.__classif_front_sub = self.create_subscription(DetectionArray, "proc_vision/front/classif", self.__create_magic_front, 10)
         self.__classif_bottom_sub = self.create_subscription(DetectionArray, "proc_vision/bottom/classif", self.__create_magic_bottom, 10)

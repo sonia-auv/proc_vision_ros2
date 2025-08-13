@@ -8,7 +8,7 @@ import numpy as np
 import os
 import cv2
 from .yolov8 import YOLOv8
-from sonia_common_ros2.msg import DetectionArray
+from sonia_common_ros2.msg import DetectionArray, Detection
 from sonia_common_ros2.srv import AiActivationService
 
 if os.path.exists('/home/sonia/ssd/ros2_sonia_ws/src/proc_vision_ros2/models/'):
@@ -111,5 +111,11 @@ class VisionNode(Node):
     #             self.get_logger().info(f"Depth2 image max: {depth2.max()}, min: {depth2.min()}, mean: {depth2.mean()}")
 
     def __img_detection(self, msg: CompressedImage, model: YOLOv8) -> DetectionArray:
-        image = cv2.imdecode(np.frombuffer(msg.data, np.uint8), cv2.IMREAD_COLOR)
-        return model.detect(image, msg.header.frame_id)
+        try:
+            image = cv2.imdecode(np.frombuffer(msg.data, np.uint8), cv2.IMREAD_COLOR)
+            return model.detect(image, msg.header.frame_id)
+        except:
+            detections = DetectionArray()
+            detections.detected_object = []
+            return detections
+

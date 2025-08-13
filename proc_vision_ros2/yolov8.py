@@ -41,7 +41,7 @@ class YOLOv8:
         >>> output_image = detector.main()
     """
 
-    def __init__(self, onnx_model: str, confidence_thres: float=0.3, node):
+    def __init__(self, onnx_model: str, node, confidence_thres: float=0.3):
         """
         Initialize an instance of the YOLOv8 class.
 

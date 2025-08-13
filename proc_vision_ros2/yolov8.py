@@ -228,6 +228,7 @@ class YOLOv8:
         detections.detected_object = []
         # Iterate over the selected indices after non-maximum suppression
         for i, box in enumerate(boxes):
+            self.logger.info(f"Detection {i}: Score: {scores[i]}, Class ID: {class_ids[i]} -> {self.classes[class_ids[i]]}")
             classif = Detection()
             classif.top_left_x = float(box[0])
             classif.top_left_y = float(box[1])

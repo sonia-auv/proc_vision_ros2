@@ -20,7 +20,6 @@ class YOLOv8:
         onnx_model (str): Path to the ONNX model file.
         input_image (str): Path to the input image file.
         confidence_thres (float): Confidence threshold for filtering detections.
-        iou_thres (float): IoU threshold for non-maximum suppression.
         classes (List[str]): List of class names from the COCO dataset.
         color_palette (np.ndarray): Random color palette for visualizing different classes.
         input_width (int): Width dimension of the model input.
@@ -42,20 +41,20 @@ class YOLOv8:
         >>> output_image = detector.main()
     """
 
-    def __init__(self, onnx_model: str, confidence_thres: float=0.5, iou_thres: float=1):
+    def __init__(self, onnx_model: str, node, confidence_thres: float=0.3):
         """
         Initialize an instance of the YOLOv8 class.
 
         Args:
             onnx_model (str): Path to the ONNX model.
             confidence_thres (float): Confidence threshold for filtering detections.
-            iou_thres (float): IoU threshold for non-maximum suppression.
         """
         self.onnx_model = onnx_model+"/model.onnx"
         self.input_image = None
         self.draw = False
         self.confidence_thres = confidence_thres
-        self.iou_thres = iou_thres
+        self.clahe = cv2.createCLAHE(clipLimit=2.5, tileGridSize=(8,8))
+        self.node = node
 
         # Load the class names from the COCO dataset
         with open(onnx_model+"/data.yaml", 'r') as stream:
@@ -65,6 +64,13 @@ class YOLOv8:
 
         # Create an inference session using the ONNX model and specify execution providers
         self.session = ort.InferenceSession(self.onnx_model, providers=["CUDAExecutionProvider"])#, "CPUExecutionProvider"])
+
+    def preprocess_image(self, img):
+        ycrcb_img = cv2.cvtColor(np.array(img), cv2.COLOR_BGR2YCrCb)
+        y, cr, cb = cv2.split(ycrcb_img)
+        y_clahe = self.clahe.apply(y)
+        clahe_ycrcb = cv2.merge([y_clahe, cr, cb])
+        return cv2.cvtColor(clahe_ycrcb, cv2.COLOR_YCrCb2BGR)
 
     def letterbox(self, img: np.ndarray, new_shape: Tuple[int, int] = (640, 640)) -> Tuple[np.ndarray, Tuple[int, int]]:
         """
@@ -141,6 +147,8 @@ class YOLOv8:
 
         # Convert the image color space from BGR to RGB
         img = cv2.cvtColor(self.input_image, cv2.COLOR_BGR2RGB)
+
+        img = self.preprocess_image(img)
 
         img, pad = self.letterbox(img, (self.input_width, self.input_height))
 
@@ -221,6 +229,7 @@ class YOLOv8:
         detections.detected_object = []
         # Iterate over the selected indices after non-maximum suppression
         for i, box in enumerate(boxes):
+            self.node.get_logger().info(f"Detection {i}: Score: {scores[i]}, Class ID: {class_ids[i]} -> {self.classes[class_ids[i]]}")
             classif = Detection()
             classif.top_left_x = float(box[0])
             classif.top_left_y = float(box[1])

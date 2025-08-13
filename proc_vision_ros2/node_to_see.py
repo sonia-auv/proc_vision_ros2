@@ -97,7 +97,7 @@ class NodeTosee(Node):
         
     def get_deep(self, x,y,w,h) -> int:
         sum = 0
-        number +=1
+        number +=1 
         resized_image = cv2.resize(self.__deep_list[-1], (w, h))
         if(x<AREA_OF_SEE):
             xStart = 0
@@ -111,4 +111,35 @@ class NodeTosee(Node):
             for j in range(AREA_OF_SEE*2+1) and y+j<h:
                 sum += resized_image[yStart+j][xStart+i]
                 number+=1
-        return sum/number
+        return (sum/number)*15
+        
+    def get_deep_istogram(self, x1,x2,y1,y2,w,h) -> int:
+        dictValue = dict()
+        resized_image = cv2.resize(self.__deep_list[-1], (w, h))
+        for i in range(x1,x2):
+            for j in range(y1,y2):
+                if not resized_image[j][i] in dictValue.keys():
+                    dictValue[resized_image[j][i]]=0
+                dictValue[resized_image[j][i]]+=1
+        histogram = sorted(dictValue.items())
+        if(histogram[0][0] == 0):
+            histogram = histogram[1:]
+        max1 = 0
+        valueMax1 = 0
+        max2 = 0
+        valueMax2 = 0
+        print(histogram)
+        for keys,value in histogram:
+            if (value) > valueMax1:
+                max2 = max1
+                valueMax2 = valueMax1
+                valueMax1 = value
+                max1 = keys
+            elif value > valueMax2:
+                max2 = keys
+                valueMax2 = value
+        if valueMax2 > (x2-x1)*(y2-y1) and max1==255:
+            return max2/255*15
+        else:
+            return max1/255*15
+        

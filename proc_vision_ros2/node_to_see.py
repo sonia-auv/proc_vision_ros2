@@ -23,10 +23,12 @@ class NodeTosee(Node):
         self.__bottom_cam_sub = self.create_subscription(Image, "camera_array/bottom/image_raw", self.__img_bottom_callback, 10)
         self.__classif_front_sub = self.create_subscription(DetectionArray, "proc_vision/front/classif", self.__create_magic_front, 10)
         self.__classif_bottom_sub = self.create_subscription(DetectionArray, "proc_vision/bottom/classif", self.__create_magic_bottom, 10)
+        self.__zed_depth = self.create_subscription(DetectionArray, "zed/zed_node/point_cloud/findWHAT/compressed", self.__get_depth, 10)
         self.__classif_front_pub = self.create_publisher(Image, "proc_vision/front/image", 10)
         self.__classif_bottom_pub = self.create_publisher(Image, "proc_vision/bottom/image", 10)
         self.__bottom_list = []
         self.__front_list = []
+        self.__deep_list = []
         if not os.path.exists(OUTPUT_DIR):
             os.makedirs(OUTPUT_DIR)
 
@@ -62,6 +64,32 @@ class NodeTosee(Node):
         self.__classif_bottom_pub.publish(image)
 
     def __create_magic_front(self, msg: DetectionArray):
+        image = self.__front_list[-1]
+        self.__front_list = [image]
+        for res in msg.detected_object:
+            cv2.putText(image, 
+                        res.class_name, 
+                        (int((res.top_left_x+5)),
+                        int((res.bottom_right_y-10)/2)), 
+                        cv2.FONT_HERSHEY_PLAIN, 
+                        .7, (0,0,255), 1, 1)
+            cv2.putText(image, 
+                        "{:.1f}%".format(res.confidence), 
+                        (int((res.top_left_x+5)),
+                        int((res.bottom_right_y+10)/2)), 
+                        cv2.FONT_HERSHEY_PLAIN, 
+                        .7, (0,0,255), 1, 1)
+            cv2.rectangle(image, 
+                        (int(res.top_left_x),int(res.top_left_y)), 
+                        (int(res.bottom_right_x),int(res.bottom_right_y)), 
+                        (0,0,255), 1)
+        if SAVE_OUTPUT:
+            cv2.imwrite(OUTPUT_DIR+'pred_front_'+str(int(1000*datetime.now().time()))+'.jpg', 
+                        image) 
+        self.__classif_front_pub.publish(image)
+
+    def __get_depth(self, msg: Image):
+        self.__deep_list.append((np.frombuffer(msg.data, np.uint8),msg.width,msg.height))
         image = self.__front_list[-1]
         self.__front_list = [image]
         for res in msg.detected_object:

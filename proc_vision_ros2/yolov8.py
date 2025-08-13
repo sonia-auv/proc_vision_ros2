@@ -41,7 +41,7 @@ class YOLOv8:
         >>> output_image = detector.main()
     """
 
-    def __init__(self, onnx_model: str, confidence_thres: float=0.3):
+    def __init__(self, onnx_model: str, confidence_thres: float=0.3, node):
         """
         Initialize an instance of the YOLOv8 class.
 
@@ -54,6 +54,7 @@ class YOLOv8:
         self.draw = False
         self.confidence_thres = confidence_thres
         self.clahe = cv2.createCLAHE(clipLimit=2.5, tileGridSize=(8,8))
+        self.node = node
 
         # Load the class names from the COCO dataset
         with open(onnx_model+"/data.yaml", 'r') as stream:
@@ -228,7 +229,7 @@ class YOLOv8:
         detections.detected_object = []
         # Iterate over the selected indices after non-maximum suppression
         for i, box in enumerate(boxes):
-            self.logger.info(f"Detection {i}: Score: {scores[i]}, Class ID: {class_ids[i]} -> {self.classes[class_ids[i]]}")
+            self.node.get_logger().info(f"Detection {i}: Score: {scores[i]}, Class ID: {class_ids[i]} -> {self.classes[class_ids[i]]}")
             classif = Detection()
             classif.top_left_x = float(box[0])
             classif.top_left_y = float(box[1])

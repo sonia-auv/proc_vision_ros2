@@ -126,6 +126,7 @@ class VisionNode(Node):
             for detect in detections.detected_object:
                 self.get_logger().info(str(self.get_deep((detect.bottom_right_x+detect.top_left_x)//2,(detect.bottom_right_y+detect.top_left_y)//2,672,376)))
                 self.get_logger().info(str(self.get_deep_istogram(int(detect.top_left_x), int(detect.bottom_right_x), int(detect.top_left_y) ,int(detect.bottom_right_y),672,376)))
+                detect.distance = self.get_deep_istogram(int(detect.top_left_x), int(detect.bottom_right_x), int(detect.top_left_y) ,int(detect.bottom_right_y),672,376)
             # self.print_results(image, detections)
             return detections
         except Exception as e:
@@ -186,9 +187,10 @@ class VisionNode(Node):
         # resized_image = cv2.resize(self.__actual, (w, h))
         for i in range(x1,x2):
             for j in range(y1,y2):
-                if not resized_image[j,i] in dictValue.keys():
-                    dictValue[resized_image[j,i]]=0
-                dictValue[resized_image[j,i]]+=1
+                if( not resized_image[j,i] <=5):
+                    if not resized_image[j,i] in dictValue.keys():
+                        dictValue[resized_image[j,i]]=0
+                    dictValue[resized_image[j,i]]+=1
         histogram = sorted(dictValue.items())
         if(histogram[0][0] == 0):
             histogram = histogram[1:]
@@ -196,6 +198,7 @@ class VisionNode(Node):
         valueMax1 = 0
         max2 = 0
         valueMax2 = 0
+        self.get_logger().info(str(histogram))
         for keys,value in histogram:
             if (value) > valueMax1:
                 max2 = max1

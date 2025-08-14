@@ -30,7 +30,8 @@ class NodeTosee(Node):
         self.__classif_bottom_pub = self.create_publisher(Image, "proc_vision/bottom/image", 10)
         self.__bottom_list = []
         self.__front_list = []
-        self.__deep_list = []
+        self.__actual = None
+        self.__deep_last = None
         if not os.path.exists(OUTPUT_DIR):
             os.makedirs(OUTPUT_DIR)
 
@@ -91,11 +92,16 @@ class NodeTosee(Node):
         self.__classif_front_pub.publish(image)
 
     def __get_depth(self, msg: CompressedImage):
-        self.__deep_list.append(cv2.imdecode(np.frombuffer(msg.data, np.uint8),0))
+        self.__deep_last = cv2.imdecode(np.frombuffer(msg.data, np.uint8),0)
         cv2.imwrite(OUTPUT_DIR+'depth_front_'+str(int(1000*datetime.now().time()))+'.jpg', 
-                    self.__deep_list[-1])
+                    self.__deep_last)
+        
+    def actualise_deep(self):
+        self.__actual = self.__deep_last
         
     def get_deep(self, x,y,w,h) -> int:
+        if(self.__actual is None):
+            self.actualise_deep()
         sum = 0
         number +=1 
         resized_image = cv2.resize(self.__deep_list[-1], (w, h))
@@ -114,6 +120,8 @@ class NodeTosee(Node):
         return (sum/number)*15
         
     def get_deep_istogram(self, x1,x2,y1,y2,w,h) -> int:
+        if(self.__actual is None):
+            self.actualise_deep()
         dictValue = dict()
         resized_image = cv2.resize(self.__deep_list[-1], (w, h))
         for i in range(x1,x2):
@@ -128,7 +136,6 @@ class NodeTosee(Node):
         valueMax1 = 0
         max2 = 0
         valueMax2 = 0
-        print(histogram)
         for keys,value in histogram:
             if (value) > valueMax1:
                 max2 = max1

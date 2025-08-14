@@ -22,6 +22,8 @@ else:
     OUTPUT_DIR = '/home/sonia/output_ai/'
 SAVE_OUTPUT = False
 
+AREA_OF_SEE = 2
+
 
 class VisionNode(Node):
 
@@ -45,6 +47,12 @@ class VisionNode(Node):
         self.model_bottom = YOLOv8(os.path.join(MODEL_DIR, model_bottom_name), self)
         self.__classif_front_pub = self.create_publisher(DetectionArray, "proc_vision/front/classif", 10)
         self.__classif_bottom_pub = self.create_publisher(DetectionArray, "proc_vision/bottom/classif", 10)
+
+        #Deep
+        self.__zed_depth = self.create_subscription(DetectionArray, "zed/zed_node/point_cloud/findWHAT/compressed", self.__get_depth, 10)
+        self.__actual = None
+        self.__deep_last = None
+
         if SAVE_OUTPUT:
             if not os.path.exists(OUTPUT_DIR):
                 os.makedirs(OUTPUT_DIR)
@@ -119,3 +127,60 @@ class VisionNode(Node):
             detections.detected_object = []
             return detections
 
+
+    def __get_depth(self, msg: CompressedImage):
+        self.__deep_last = cv2.imdecode(np.frombuffer(msg.data, np.uint8),0)
+        
+    def actualise_deep(self):
+        self.__actual = self.__deep_last
+        
+    def get_deep(self, x,y,w,h) -> int:
+        if(self.__actual is None):
+            self.actualise_deep()
+        sum = 0
+        number +=1 
+        resized_image = cv2.resize(self.__deep_list[-1], (w, h))
+        if(x<AREA_OF_SEE):
+            xStart = 0
+        else:
+            xStart = x- AREA_OF_SEE
+        if(y<AREA_OF_SEE):
+            yStart = 0
+        else:
+            yStart = y- AREA_OF_SEE
+        for i in range(AREA_OF_SEE*2+1) and x+i< w:
+            for j in range(AREA_OF_SEE*2+1) and y+j<h:
+                sum += resized_image[yStart+j][xStart+i]
+                number+=1
+        return (sum/number)*15
+        
+    def get_deep_istogram(self, x1,x2,y1,y2,w,h) -> int:
+        if(self.__actual is None):
+            self.actualise_deep()
+        dictValue = dict()
+        resized_image = cv2.resize(self.__deep_list[-1], (w, h))
+        for i in range(x1,x2):
+            for j in range(y1,y2):
+                if not resized_image[j][i] in dictValue.keys():
+                    dictValue[resized_image[j][i]]=0
+                dictValue[resized_image[j][i]]+=1
+        histogram = sorted(dictValue.items())
+        if(histogram[0][0] == 0):
+            histogram = histogram[1:]
+        max1 = 0
+        valueMax1 = 0
+        max2 = 0
+        valueMax2 = 0
+        for keys,value in histogram:
+            if (value) > valueMax1:
+                max2 = max1
+                valueMax2 = valueMax1
+                valueMax1 = value
+                max1 = keys
+            elif value > valueMax2:
+                max2 = keys
+                valueMax2 = value
+        if valueMax2 > (x2-x1)*(y2-y1) and max1==255:
+            return max2/255*15
+        else:
+            return max1/255*15

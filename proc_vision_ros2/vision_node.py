@@ -189,8 +189,6 @@ class VisionNode(Node):
                 return 15
         dictValue = dict()
         resized_image = self.__actual
-        self.get_logger().info(str(resized_image))
-        self.get_logger().info("value x1 "+str(x1)+" y1 "+str(y1)+" x2 "+str(x2)+" y2 "+str(y2))
         # resized_image = cv2.resize(self.__actual, (w, h))
         for i in range(x1,x2):
             for j in range(y1,y2):

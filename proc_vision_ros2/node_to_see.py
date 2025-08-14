@@ -104,7 +104,7 @@ class NodeTosee(Node):
             self.actualise_deep()
         sum = 0
         number +=1 
-        resized_image = cv2.resize(self.__deep_list[-1], (w, h))
+        resized_image = cv2.resize(self.__actual, (w, h))
         if(x<AREA_OF_SEE):
             xStart = 0
         else:
@@ -123,7 +123,7 @@ class NodeTosee(Node):
         if(self.__actual is None):
             self.actualise_deep()
         dictValue = dict()
-        resized_image = cv2.resize(self.__deep_list[-1], (w, h))
+        resized_image = cv2.resize(self.__actual, (w, h))
         for i in range(x1,x2):
             for j in range(y1,y2):
                 if not resized_image[j][i] in dictValue.keys():

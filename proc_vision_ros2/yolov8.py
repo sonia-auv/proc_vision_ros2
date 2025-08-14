@@ -8,7 +8,6 @@ import yaml
 from sonia_common_ros2.msg import Detection, DetectionArray
 
 
-
 class YOLOv8:
     """
     YOLOv8 object detection model class for handling ONNX inference and visualization.
@@ -110,7 +109,7 @@ class YOLOv8:
         color = self.color_palette[class_id]
 
         # Draw the bounding box on the image
-        cv2.rectangle(img, (int(x1), int(y1)), (int(x1 + w), int(y1 + h)), color, 2)
+        img = cv2.rectangle(img, (int(x1), int(y1)), (int(x1 + w), int(y1 + h)), color, 2)
 
         # Create the label text with class name and score
         label = f"{self.classes[class_id]}: {score:.2f}"
@@ -123,12 +122,12 @@ class YOLOv8:
         label_y = y1 - 10 if y1 - 10 > label_height else y1 + 10
 
         # Draw a filled rectangle as the background for the label text
-        cv2.rectangle(
+        img = cv2.rectangle(
             img, (label_x, label_y - label_height), (label_x + label_width, label_y + label_height), color, cv2.FILLED
         )
 
         # Draw the label text on the image
-        cv2.putText(img, label, (label_x, label_y), cv2.FONT_HERSHEY_SIMPLEX, 0.5, (0, 0, 0), 1, cv2.LINE_AA)
+        return cv2.putText(img, label, (label_x, label_y), cv2.FONT_HERSHEY_SIMPLEX, 0.5, (0, 0, 0), 1, cv2.LINE_AA)
 
     def preprocess(self) -> Tuple[np.ndarray, Tuple[int, int]]:
         """
@@ -224,23 +223,27 @@ class YOLOv8:
 
 
         # Apply non-maximum suppression to filter out overlapping bounding boxes
+        indices = cv2.dnn.NMSBoxes(boxes, scores, .4, .6)
 
         detections = DetectionArray()
         detections.detected_object = []
+        if len(indices) < 1:
+            return detections
         # Iterate over the selected indices after non-maximum suppression
-        for i, box in enumerate(boxes):
-            self.node.get_logger().info(f"Detection {i}: Score: {scores[i]}, Class ID: {class_ids[i]} -> {self.classes[class_ids[i]]}")
+        for i_array in indices:
+            i = i_array[0]
+            self.node.get_logger().info(f"Detection {i}: Score: {scores[i]}, Class ID: {class_ids[i]} -> {self.classes[int(class_ids[i])]}")
             classif = Detection()
-            classif.top_left_x = float(box[0])
-            classif.top_left_y = float(box[1])
-            classif.top_right_x = float(box[0])
-            classif.top_right_y = float(box[3])
-            classif.bottom_right_x = float(box[2])
-            classif.bottom_right_y = float(box[3])
-            classif.bottom_left_x = float(box[2])
-            classif.bottom_left_y = float(box[1])
+            classif.top_left_x = float(boxes[i][0])
+            classif.top_left_y = float(boxes[i][1])
+            classif.top_right_x = float(boxes[i][0])
+            classif.top_right_y = float(boxes[i][1]+boxes[i][3])
+            classif.bottom_right_x = float(boxes[i][0]+boxes[i][2])
+            classif.bottom_right_y = float(boxes[i][1]+boxes[i][3])
+            classif.bottom_left_x = float(boxes[i][0]+boxes[i][2])
+            classif.bottom_left_y = float(boxes[i][1])
             classif.confidence = float(scores[i])
-            classif.class_name = self.classes[class_ids[i]]
+            classif.class_name = self.classes[int(class_ids[i])]
             classif.frame_id = self.frame_id
             
             classif.distance = float(0)
@@ -251,7 +254,7 @@ class YOLOv8:
                 score = scores[i]
                 class_id = class_ids[i]
                 # Draw the detection on the input image
-                self.draw_detections(input_image, box, score, class_id)
+                self.draw_detections(input_image, boxes[i], score, class_id)
 
         # Return the results
         return detections

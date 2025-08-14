@@ -10,7 +10,7 @@ import cv2
 from .yolov8 import YOLOv8
 from sonia_common_ros2.msg import DetectionArray, Detection
 from sonia_common_ros2.srv import AiActivationService
-
+import traceback
 if os.path.exists('/home/sonia/ssd/ros2_sonia_ws/src/proc_vision_ros2/models/'):
     MODEL_DIR = '/home/sonia/ssd/ros2_sonia_ws/src/proc_vision_ros2/models/'
 else:
@@ -121,18 +121,33 @@ class VisionNode(Node):
     def __img_detection(self, msg: CompressedImage, model: YOLOv8) -> DetectionArray:
         try:
             image = cv2.imdecode(np.frombuffer(msg.data, np.uint8), cv2.IMREAD_COLOR)
+            detections = model.detect(image, msg.header.frame_id)
             self.actualise_deep()
-            res = model.detect(image, msg.header.frame_id)
-            for detect in res.detected_object:
+            for detect in detections.detected_object:
                 self.get_logger().info(str(self.get_deep((detect.bottom_right_x+detect.top_left_x)/2,(detect.bottom_right_y+detect.top_left_y)/2,672,376)))
                 self.get_logger().info(str(self.get_deep_istogram(detect.top_left_x, detect.bottom_right_x, detect.top_left_y ,detect.bottom_right_y,672,376)))
-            return res
+            # self.print_results(image, detections)
+            return detections
         except Exception as e:
-            self.get_logger().info(e)
+            self.get_logger().info(f"Vision node failure :{e}")
+            self.get_logger().info(f"Vision node failure trace :{traceback.format_exc()}")
             detections = DetectionArray()
             detections.detected_object = []
             return detections
 
+
+    def print_results(self, img, results: DetectionArray):
+        res:Detection
+        for res in results.detected_object:
+            img_res = cv2.rectangle(img, 
+                          (int(res.top_left_x), int(res.top_left_y)), 
+                          (int(res.bottom_right_x), int(res.bottom_right_y)),
+                          (0, 255, 0),
+                          1)
+            img_res = cv2.putText(img_res, f"{res.class_name} {res.confidence:.2f}", 
+                                  (int(res.top_left_x), int(res.top_left_y-10)), 1, 1, (0, 255, 0), 1)
+        if len(results.detected_object) > 0:
+            cv2.imwrite('/home/sonia/ssd/image_window.jpg', img_res)
 
     def __get_depth(self, msg: CompressedImage):
         self.__deep_last = cv2.imdecode(np.frombuffer(msg.data, np.uint8),cv2.IMREAD_GRAYSCALE)

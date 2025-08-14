@@ -2,6 +2,7 @@ import sys
 sys.path.append("/home/sonia/ssd/pip_pkg")
 
 from rclpy.node import Node
+from typing import Tuple
 from rclpy.parameter import Parameter
 from sensor_msgs.msg import Image, CompressedImage
 import numpy as np
@@ -159,9 +160,11 @@ class VisionNode(Node):
     def get_deep(self, x,y,w,h) -> int:
         if(self.__actual is None):
             self.actualise_deep()
+            if (self.__actual is None):
+                return 15
         sumf = 0
         number = 0
-        resized_image = self.__actual
+        resized_image = self.letterbox(self.__actual,(640,400))
         # resized_image = cv2.resize(self.__actual, (w, h))
         if(x<AREA_OF_SEE):
             xStart = 0
@@ -182,23 +185,26 @@ class VisionNode(Node):
     def get_deep_istogram(self, x1,x2,y1,y2,w,h) -> int:
         if(self.__actual is None):
             self.actualise_deep()
+            if (self.__actual is None):
+                return 15
         dictValue = dict()
-        resized_image = self.__actual
+        resized_image = self.letterbox(self.__actual,(640,400))
+        self.get_logger().info("value x1 "+x1+" y1 "+y1+" x2 "+x2+" y2 "+y2)
+        self.get_logger().info(str(resized_image))
+        self.get_logger().info(str(resized_image))
         # resized_image = cv2.resize(self.__actual, (w, h))
-        for i in range(x1,x2):
-            for j in range(y1,y2):
+        for i in range(x1,x2-1):
+            for j in range(y1,y2-1):
                 if( not resized_image[j,i] <=5):
                     if not resized_image[j,i] in dictValue.keys():
                         dictValue[resized_image[j,i]]=0
                     dictValue[resized_image[j,i]]+=1
         histogram = sorted(dictValue.items())
-        if(histogram[0][0] == 0):
-            histogram = histogram[1:]
-        max1 = 0
-        valueMax1 = 0
-        max2 = 0
-        valueMax2 = 0
         self.get_logger().info(str(histogram))
+        max1 = 255
+        valueMax1 = 0
+        max2 = 255
+        valueMax2 = 0
         for keys,value in histogram:
             if (value) > valueMax1:
                 max2 = max1
@@ -209,6 +215,37 @@ class VisionNode(Node):
                 max2 = keys
                 valueMax2 = value
         if valueMax2 > (x2-x1)*(y2-y1)*0.05 and max1>=250:
-            return (max2/255)*15
+            return (max2/255)*35
         else:
-            return (max1/255)*15
+            return (max1/255)*35
+        
+
+
+    def letterbox(self, img: np.ndarray, new_shape: Tuple[int, int] = (640, 640)) -> np.ndarray:
+        """
+        Resize and reshape images while maintaining aspect ratio by adding padding.
+
+        Args:
+            img (np.ndarray): Input image to be resized.
+            new_shape (Tuple[int, int]): Target shape (height, width) for the image.
+
+        Returns:
+            img (np.ndarray): Resized and padded image.
+            pad (Tuple[int, int]): Padding values (top, left) applied to the image.
+        """
+        shape = img.shape[:2]  # current shape [height, width]
+
+        # Scale ratio (new / old)
+        r = min(new_shape[0] / shape[0], new_shape[1] / shape[1])
+
+        # Compute padding
+        new_unpad = int(round(shape[1] * r)), int(round(shape[0] * r))
+        dw, dh = (new_shape[1] - new_unpad[0]) / 2, (new_shape[0] - new_unpad[1]) / 2  # wh padding
+
+        if shape[::-1] != new_unpad:  # resize
+            img = cv2.resize(img, new_unpad, interpolation=cv2.INTER_LINEAR)
+        top, bottom = int(round(dh - 0.1)), int(round(dh + 0.1))
+        left, right = int(round(dw - 0.1)), int(round(dw + 0.1))
+        img = cv2.copyMakeBorder(img, top, bottom, left, right, cv2.BORDER_CONSTANT, 0)
+
+        return img

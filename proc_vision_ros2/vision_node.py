@@ -164,7 +164,7 @@ class VisionNode(Node):
                 return 15
         sumf = 0
         number = 0
-        resized_image = self.letterbox(self.__actual,(640,400))
+        resized_image = self.__actual
         # resized_image = cv2.resize(self.__actual, (w, h))
         if(x<AREA_OF_SEE):
             xStart = 0
@@ -180,7 +180,7 @@ class VisionNode(Node):
                     if y+j<h:
                         sumf += resized_image[int(yStart+j)][int(xStart+i)]
                         number+=1
-        return ((sumf/number)/255)*15
+        return ((sumf/number)/255)*35
         
     def get_deep_istogram(self, x1,x2,y1,y2,w,h) -> int:
         if(self.__actual is None):
@@ -188,13 +188,12 @@ class VisionNode(Node):
             if (self.__actual is None):
                 return 15
         dictValue = dict()
-        resized_image = self.letterbox(self.__actual,(640,400))
-        self.get_logger().info("value x1 "+x1+" y1 "+y1+" x2 "+x2+" y2 "+y2)
+        resized_image = self.__actual
         self.get_logger().info(str(resized_image))
-        self.get_logger().info(str(resized_image))
+        self.get_logger().info("value x1 "+str(x1)+" y1 "+str(y1)+" x2 "+str(x2)+" y2 "+str(y2))
         # resized_image = cv2.resize(self.__actual, (w, h))
-        for i in range(x1,x2-1):
-            for j in range(y1,y2-1):
+        for i in range(x1,x2):
+            for j in range(y1,y2):
                 if( not resized_image[j,i] <=5):
                     if not resized_image[j,i] in dictValue.keys():
                         dictValue[resized_image[j,i]]=0

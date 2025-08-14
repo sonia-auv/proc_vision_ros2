@@ -135,7 +135,7 @@ class VisionNode(Node):
 
 
     def __get_depth(self, msg: CompressedImage):
-        self.__deep_last = cv2.imdecode(np.frombuffer(msg.data, np.uint8),0)
+        self.__deep_last = cv2.imdecode(np.frombuffer(msg.data, np.uint8),cv2.IMREAD_GRAYSCALE)
         
     def actualise_deep(self):
         self.__actual = self.__deep_last

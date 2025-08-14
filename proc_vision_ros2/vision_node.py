@@ -49,7 +49,7 @@ class VisionNode(Node):
         self.__classif_bottom_pub = self.create_publisher(DetectionArray, "proc_vision/bottom/classif", 10)
 
         #Deep
-        self.__zed_depth = self.create_subscription(DetectionArray, "zed/zed_node/point_cloud/findWHAT/compressed", self.__get_depth, 10)
+        self.__zed_depth = self.create_subscription(DetectionArray, "zed/zed_node/depth/depth_registered/compressed", self.__get_depth, 10)
         self.__actual = None
         self.__deep_last = None
 
@@ -121,8 +121,14 @@ class VisionNode(Node):
     def __img_detection(self, msg: CompressedImage, model: YOLOv8) -> DetectionArray:
         try:
             image = cv2.imdecode(np.frombuffer(msg.data, np.uint8), cv2.IMREAD_COLOR)
-            return model.detect(image, msg.header.frame_id)
-        except:
+            self.actualise_deep()
+            res = model.detect(image, msg.header.frame_id)
+            for detect in res.detected_object:
+                self.get_logger().info(str(self.get_deep((detect.bottom_right_x+detect.top_left_x)/2,(detect.bottom_right_y+detect.top_left_y)/2,672,376)))
+                self.get_logger().info(str(self.get_deep_istogram(detect.top_left_x, detect.bottom_right_x, detect.top_left_y ,detect.bottom_right_y,672,376)))
+            return res
+        except Exception as e:
+            self.get_logger().info(e)
             detections = DetectionArray()
             detections.detected_object = []
             return detections

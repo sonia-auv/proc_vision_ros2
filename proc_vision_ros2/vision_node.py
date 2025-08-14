@@ -49,7 +49,7 @@ class VisionNode(Node):
         self.__classif_bottom_pub = self.create_publisher(DetectionArray, "proc_vision/bottom/classif", 10)
 
         #Deep
-        self.__zed_depth = self.create_subscription(DetectionArray, "zed/zed_node/depth/depth_registered/compressed", self.__get_depth, 10)
+        self.__zed_depth = self.create_subscription(CompressedImage, "zed/zed_node/depth/depth_registered/compressed", self.__get_depth, 10)
         self.__actual = None
         self.__deep_last = None
 
@@ -124,8 +124,8 @@ class VisionNode(Node):
             detections = model.detect(image, msg.header.frame_id)
             self.actualise_deep()
             for detect in detections.detected_object:
-                self.get_logger().info(str(self.get_deep((detect.bottom_right_x+detect.top_left_x)/2,(detect.bottom_right_y+detect.top_left_y)/2,672,376)))
-                self.get_logger().info(str(self.get_deep_istogram(detect.top_left_x, detect.bottom_right_x, detect.top_left_y ,detect.bottom_right_y,672,376)))
+                self.get_logger().info(str(self.get_deep((detect.bottom_right_x+detect.top_left_x)//2,(detect.bottom_right_y+detect.top_left_y)//2,672,376)))
+                self.get_logger().info(str(self.get_deep_istogram(int(detect.top_left_x), int(detect.bottom_right_x), int(detect.top_left_y) ,int(detect.bottom_right_y),672,376)))
             # self.print_results(image, detections)
             return detections
         except Exception as e:
@@ -160,7 +160,8 @@ class VisionNode(Node):
             self.actualise_deep()
         sumf = 0
         number = 0
-        resized_image = cv2.resize(self.__actual, (w, h))
+        resized_image = self.__actual
+        # resized_image = cv2.resize(self.__actual, (w, h))
         if(x<AREA_OF_SEE):
             xStart = 0
         else:
@@ -169,22 +170,25 @@ class VisionNode(Node):
             yStart = 0
         else:
             yStart = y- AREA_OF_SEE
-        for i in range(AREA_OF_SEE*2+1) and x+i< w:
-            for j in range(AREA_OF_SEE*2+1) and y+j<h:
-                sumf += resized_image[yStart+j][xStart+i]
-                number+=1
-        return (sumf/number)*15
+        for i in range(AREA_OF_SEE*2+1):
+            if x+i< w:
+                for j in range(AREA_OF_SEE*2+1):
+                    if y+j<h:
+                        sumf += resized_image[int(yStart+j)][int(xStart+i)]
+                        number+=1
+        return ((sumf/number)/255)*15
         
     def get_deep_istogram(self, x1,x2,y1,y2,w,h) -> int:
         if(self.__actual is None):
             self.actualise_deep()
         dictValue = dict()
-        resized_image = cv2.resize(self.__actual, (w, h))
+        resized_image = self.__actual
+        # resized_image = cv2.resize(self.__actual, (w, h))
         for i in range(x1,x2):
             for j in range(y1,y2):
-                if not resized_image[j][i] in dictValue.keys():
-                    dictValue[resized_image[j][i]]=0
-                dictValue[resized_image[j][i]]+=1
+                if not resized_image[j,i] in dictValue.keys():
+                    dictValue[resized_image[j,i]]=0
+                dictValue[resized_image[j,i]]+=1
         histogram = sorted(dictValue.items())
         if(histogram[0][0] == 0):
             histogram = histogram[1:]

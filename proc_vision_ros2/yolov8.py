@@ -161,6 +161,7 @@ class YOLOv8:
         image_data = np.expand_dims(image_data, axis=0).astype(np.float32)
 
         # Return the preprocessed image data
+        self.node.get_logger().info(f"Input image shape: {image_data.shape}, Padding: {pad}")
         return image_data, pad
 
     def postprocess(self, input_image: np.ndarray, output: List[np.ndarray], pad: Tuple[int, int]) -> DetectionArray:

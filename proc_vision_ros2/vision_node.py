@@ -180,7 +180,7 @@ class VisionNode(Node):
             elif value > valueMax2:
                 max2 = keys
                 valueMax2 = value
-        if valueMax2 > (x2-x1)*(y2-y1) and max1==255:
+        if valueMax2 > (x2-x1)*(y2-y1)*0.1 and max1==255:
             return max2/255*15
         else:
             return max1/255*15

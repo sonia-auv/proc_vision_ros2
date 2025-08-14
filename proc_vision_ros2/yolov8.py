@@ -227,9 +227,12 @@ class YOLOv8:
 
         detections = DetectionArray()
         detections.detected_object = []
+        if len(indices) < 1:
+            return detections
         # Iterate over the selected indices after non-maximum suppression
-        for i in indices:
-            self.node.get_logger().info(f"Detection {i}: Score: {scores[i]}, Class ID: {class_ids[i]} -> {self.classes[class_ids[i]]}")
+        for i_array in indices:
+            i = i_array[0]
+            self.node.get_logger().info(f"Detection {i}: Score: {scores[i]}, Class ID: {class_ids[i]} -> {self.classes[int(class_ids[i])]}")
             classif = Detection()
             classif.top_left_x = float(boxes[i][0])
             classif.top_left_y = float(boxes[i][1])
@@ -240,7 +243,7 @@ class YOLOv8:
             classif.bottom_left_x = float(boxes[i][0]+boxes[i][2])
             classif.bottom_left_y = float(boxes[i][1])
             classif.confidence = float(scores[i])
-            classif.class_name = self.classes[class_ids[i]]
+            classif.class_name = self.classes[int(class_ids[i])]
             classif.frame_id = self.frame_id
             
             classif.distance = float(0)

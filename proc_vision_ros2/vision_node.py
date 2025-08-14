@@ -143,8 +143,8 @@ class VisionNode(Node):
     def get_deep(self, x,y,w,h) -> int:
         if(self.__actual is None):
             self.actualise_deep()
-        sum = 0
-        number +=1 
+        sumf = 0
+        number = 0
         resized_image = cv2.resize(self.__actual, (w, h))
         if(x<AREA_OF_SEE):
             xStart = 0
@@ -156,9 +156,9 @@ class VisionNode(Node):
             yStart = y- AREA_OF_SEE
         for i in range(AREA_OF_SEE*2+1) and x+i< w:
             for j in range(AREA_OF_SEE*2+1) and y+j<h:
-                sum += resized_image[yStart+j][xStart+i]
+                sumf += resized_image[yStart+j][xStart+i]
                 number+=1
-        return (sum/number)*15
+        return (sumf/number)*15
         
     def get_deep_istogram(self, x1,x2,y1,y2,w,h) -> int:
         if(self.__actual is None):

@@ -124,6 +124,7 @@ class VisionNode(Node):
             image = cv2.imdecode(np.frombuffer(msg.data, np.uint8), cv2.IMREAD_COLOR)
             detections = model.detect(image, msg.header.frame_id)
             self.actualise_deep()
+            self.get_logger().info(f"Image size = {image.shape[0]}x{image.shape[1]}")
             for detect in detections.detected_object:
                 self.get_logger().info(str(self.get_deep((detect.bottom_right_x+detect.top_left_x)//2,(detect.bottom_right_y+detect.top_left_y)//2,672,376)))
                 self.get_logger().info(str(self.get_deep_istogram(int(detect.top_left_x), int(detect.bottom_right_x), int(detect.top_left_y) ,int(detect.bottom_right_y),672,376)))

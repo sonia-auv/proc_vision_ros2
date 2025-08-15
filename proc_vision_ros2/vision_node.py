@@ -249,6 +249,9 @@ class VisionNode(Node):
         img = cv2.copyMakeBorder(img, top, bottom, left, right, cv2.BORDER_CONSTANT, 0)
         self.get_logger().info(str(img))
 
+        # Transpose the image to have the channel dimension as the first dimension
+        img = np.transpose(img, (2, 0, 1))  # Channel first
+
         img = np.expand_dims(img, axis=0).astype(np.float32)
         self.get_logger().info(str(img))
 

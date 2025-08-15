@@ -126,6 +126,7 @@ class VisionNode(Node):
             self.actualise_deep()
             self.get_logger().info(f"Image size in vision node = {image.shape[0]}x{image.shape[1]}")
             for detect in detections.detected_object:
+                self.get_logger().info(f"Detection : {detect.class_name}")
                 self.get_logger().info(str(self.get_deep((detect.bottom_right_x+detect.top_left_x)//2,(detect.bottom_right_y+detect.top_left_y)//2,672,376)))
                 self.get_logger().info(str(self.get_deep_istogram(int(detect.top_left_x), int(detect.bottom_right_x), int(detect.top_left_y) ,int(detect.bottom_right_y),672,376)))
                 detect.distance = self.get_deep_istogram(int(detect.top_left_x), int(detect.bottom_right_x), int(detect.top_left_y) ,int(detect.bottom_right_y),672,376)

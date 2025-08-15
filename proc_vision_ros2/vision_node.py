@@ -154,7 +154,7 @@ class VisionNode(Node):
             cv2.imwrite('/home/sonia/ssd/image_window.jpg', img_res)
 
     def __get_depth(self, msg: CompressedImage):
-        self.__deep_last = cv2.imdecode(np.frombuffer(msg.data, np.uint8),cv2.IMREAD_GRAYSCALE)
+        self.__deep_last = cv2.imdecode(np.frombuffer(self.letterbox(msg.data,(608,608)), np.uint8),cv2.IMREAD_GRAYSCALE)
         
     def actualise_deep(self):
         self.__actual = self.__deep_last

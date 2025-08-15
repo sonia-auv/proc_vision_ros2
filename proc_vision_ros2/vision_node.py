@@ -191,6 +191,7 @@ class VisionNode(Node):
                 return 15
         dictValue = dict()
         resized_image = self.__actual
+        self.node.get_logger().info(f"Input image shape: {resized_image.shape}, Padding: {pad}")
         # resized_image = cv2.resize(self.__actual, (w, h))
         for i in range(x1,x2):
             for j in range(y1,y2):
@@ -246,5 +247,9 @@ class VisionNode(Node):
         top, bottom = int(round(dh - 0.1)), int(round(dh + 0.1))
         left, right = int(round(dw - 0.1)), int(round(dw + 0.1))
         img = cv2.copyMakeBorder(img, top, bottom, left, right, cv2.BORDER_CONSTANT, 0)
+        self.get_logger().info(str(img))
+
+        img = np.expand_dims(img, axis=0).astype(np.float32)
+        self.get_logger().info(str(img))
 
         return img

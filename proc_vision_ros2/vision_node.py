@@ -154,7 +154,10 @@ class VisionNode(Node):
             cv2.imwrite('/home/sonia/ssd/image_window.jpg', img_res)
 
     def __get_depth(self, msg: CompressedImage):
-        self.__deep_last = self.letterbox(cv2.imdecode(np.frombuffer(msg.data, np.uint8),cv2.IMREAD_GRAYSCALE),(608,608))
+        try:
+            self.__deep_last = self.letterbox(cv2.imdecode(np.frombuffer(msg.data, np.uint8),cv2.IMREAD_GRAYSCALE),(600,400))
+        except:
+            pass
         
     def actualise_deep(self):
         self.__actual = self.__deep_last
@@ -191,7 +194,6 @@ class VisionNode(Node):
                 return 15
         dictValue = dict()
         resized_image = self.__actual
-        self.node.get_logger().info(f"Input image shape: {resized_image.shape}, Padding: {pad}")
         # resized_image = cv2.resize(self.__actual, (w, h))
         for i in range(x1,x2):
             for j in range(y1,y2):
@@ -246,13 +248,7 @@ class VisionNode(Node):
             img = cv2.resize(img, new_unpad, interpolation=cv2.INTER_LINEAR)
         top, bottom = int(round(dh - 0.1)), int(round(dh + 0.1))
         left, right = int(round(dw - 0.1)), int(round(dw + 0.1))
+
         img = cv2.copyMakeBorder(img, top, bottom, left, right, cv2.BORDER_CONSTANT, 0)
-        self.get_logger().info(str(img))
-
-        # Transpose the image to have the channel dimension as the first dimension
-        img = np.transpose(img, (2, 0, 1))  # Channel first
-
-        img = np.expand_dims(img, axis=0).astype(np.float32)
-        self.get_logger().info(str(img))
 
         return img

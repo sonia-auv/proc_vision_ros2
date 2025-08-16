@@ -127,7 +127,6 @@ class VisionNode(Node):
             self.get_logger().info(f"Image size in vision node = {image.shape[0]}x{image.shape[1]}")
             for detect in detections.detected_object:
                 self.get_logger().info(f"Detection : {detect.class_name}")
-                self.get_logger().info(str(self.get_deep((detect.bottom_right_x+detect.top_left_x)//2,(detect.bottom_right_y+detect.top_left_y)//2,672,376)))
                 self.get_logger().info(str(self.get_deep_istogram(int(detect.top_left_x), int(detect.bottom_right_x), int(detect.top_left_y) ,int(detect.bottom_right_y),672,376)))
                 detect.distance = self.get_deep_istogram(int(detect.top_left_x), int(detect.bottom_right_x), int(detect.top_left_y) ,int(detect.bottom_right_y),672,376)
             # self.print_results(image, detections)
@@ -154,11 +153,15 @@ class VisionNode(Node):
             cv2.imwrite('/home/sonia/ssd/image_window.jpg', img_res)
 
     def __get_depth(self, msg: CompressedImage):
-        self.__deep_last = self.letterbox(cv2.imdecode(np.frombuffer(msg.data, np.uint8),cv2.IMREAD_GRAYSCALE),(608,608))
-        
+        try:
+            self.__deep_last = self.letterbox(cv2.imdecode(np.frombuffer(msg.data, np.uint8),cv2.IMREAD_GRAYSCALE),(720,1280))
+            cv2.imwrite('/home/sonia/ssd/image_deep.jpg', self.__deep_last)
+        except:
+            pass
+
     def actualise_deep(self):
         self.__actual = self.__deep_last
-        
+
     def get_deep(self, x,y,w,h) -> int:
         if(self.__actual is None):
             self.actualise_deep()
@@ -182,7 +185,9 @@ class VisionNode(Node):
                     if y+j<h:
                         sumf += resized_image[int(yStart+j)][int(xStart+i)]
                         number+=1
-        return ((sumf/number)/255)*35
+        if number <=0:
+            return 0
+        return ((sumf/number)/255)*15
         
     def get_deep_istogram(self, x1,x2,y1,y2,w,h) -> int:
         if(self.__actual is None):
@@ -191,16 +196,13 @@ class VisionNode(Node):
                 return 15
         dictValue = dict()
         resized_image = self.__actual
-        self.node.get_logger().info(f"Input image shape: {resized_image.shape}, Padding: {pad}")
-        # resized_image = cv2.resize(self.__actual, (w, h))
-        for i in range(x1,x2):
-            for j in range(y1,y2):
+        for i in range(min(x1,1280),min(x2,1280)):
+            for j in range(min(y1,720),min(720,y2)):
                 if( not resized_image[j,i] <=5):
                     if not resized_image[j,i] in dictValue.keys():
                         dictValue[resized_image[j,i]]=0
                     dictValue[resized_image[j,i]]+=1
         histogram = sorted(dictValue.items())
-        self.get_logger().info(str(histogram))
         max1 = 255
         valueMax1 = 0
         max2 = 255
@@ -215,9 +217,9 @@ class VisionNode(Node):
                 max2 = keys
                 valueMax2 = value
         if valueMax2 > (x2-x1)*(y2-y1)*0.05 and max1>=250:
-            return (max2/255)*35
+            return (max2/255)*15
         else:
-            return (max1/255)*35
+            return (max1/255)*15
         
 
 
@@ -246,13 +248,7 @@ class VisionNode(Node):
             img = cv2.resize(img, new_unpad, interpolation=cv2.INTER_LINEAR)
         top, bottom = int(round(dh - 0.1)), int(round(dh + 0.1))
         left, right = int(round(dw - 0.1)), int(round(dw + 0.1))
+
         img = cv2.copyMakeBorder(img, top, bottom, left, right, cv2.BORDER_CONSTANT, 0)
-        self.get_logger().info(str(img))
-
-        # Transpose the image to have the channel dimension as the first dimension
-        img = np.transpose(img, (2, 0, 1))  # Channel first
-
-        img = np.expand_dims(img, axis=0).astype(np.float32)
-        self.get_logger().info(str(img))
 
         return img

@@ -5,7 +5,9 @@ from rclpy.node import Node
 from typing import Tuple
 from rclpy.parameter import Parameter
 from sensor_msgs.msg import Image, CompressedImage
+from rclpy.qos import QoSProfile, ReliabilityPolicy
 import numpy as np
+from PIL import Image
 import os
 import cv2
 from .yolov8 import YOLOv8
@@ -30,6 +32,10 @@ class VisionNode(Node):
 
     def __init__(self):
         super().__init__("vision_node")
+        
+        qos = QoSProfile(depth=10)
+        qos.reliability = ReliabilityPolicy.BEST_EFFORT
+
         self.camera_front = False
         self.camera_bottom = False
         self.declare_parameter("models", Parameter.Type.STRING_ARRAY) 
@@ -39,7 +45,7 @@ class VisionNode(Node):
         self.__front_cam_sim = self.create_subscription(CompressedImage, "proc_simulation/front/compressed", self.__img_front_callback, 10)
         # self.__front_cam_depth = self.create_subscription(Image, "zed/zed_node/depth/depth_registered", self.__depth_front_callback, 10)
         
-        self.__bottom_cam_sub = self.create_subscription(Image, "camera_array/bottom/image_raw", self.__img_bottom_callback, 10)
+        self.__bottom_cam_sub = self.create_subscription(CompressedImage, "camera_array/bottom/image_raw/compressed", self.__img_bottom_callback, qos)
         self.__bottom_cam_sim = self.create_subscription(CompressedImage, "proc_simulation/bottom/compressed", self.__img_bottom_callback, 10)
 
         model_front_name = self.get_parameter("models").get_parameter_value().string_array_value[0]
@@ -123,13 +129,15 @@ class VisionNode(Node):
         try:
             image = cv2.imdecode(np.frombuffer(msg.data, np.uint8), cv2.IMREAD_COLOR)
             detections = model.detect(image, msg.header.frame_id)
-            self.actualise_deep()
-            self.get_logger().info(f"Image size in vision node = {image.shape[0]}x{image.shape[1]}")
-            for detect in detections.detected_object:
-                self.get_logger().info(f"Detection : {detect.class_name}")
-                self.get_logger().info(str(self.get_deep_istogram(int(detect.top_left_x), int(detect.bottom_right_x), int(detect.top_left_y) ,int(detect.bottom_right_y),672,376)))
-                detect.distance = self.get_deep_istogram(int(detect.top_left_x), int(detect.bottom_right_x), int(detect.top_left_y) ,int(detect.bottom_right_y),672,376)
-            # self.print_results(image, detections)
+            if(self.camera_front):
+                self.actualise_deep()
+                self.get_logger().info(f"Image size in vision node = {image.shape[0]}x{image.shape[1]}")
+                for detect in detections.detected_object:
+                    self.get_logger().info(f"Detection : {detect.class_name}")
+                    self.get_logger().info(str(self.get_deep((detect.bottom_right_x+detect.top_left_x)//2,(detect.bottom_right_y+detect.top_left_y)//2,672,376)))
+                    self.get_logger().info(str(self.get_deep_istogram(int(detect.top_left_x), int(detect.bottom_right_x), int(detect.top_left_y) ,int(detect.bottom_right_y),672,376)))
+                    detect.distance = self.get_deep_istogram(int(detect.top_left_x), int(detect.bottom_right_x), int(detect.top_left_y) ,int(detect.bottom_right_y),672,376)
+                # self.print_results(image, detections)
             return detections
         except Exception as e:
             self.get_logger().info(f"Vision node failure :{e}")
@@ -154,9 +162,12 @@ class VisionNode(Node):
 
     def __get_depth(self, msg: CompressedImage):
         try:
-            self.__deep_last = self.letterbox(cv2.imdecode(np.frombuffer(msg.data, np.uint8),cv2.IMREAD_GRAYSCALE),(720,1280))
-            cv2.imwrite('/home/sonia/ssd/image_deep.jpg', self.__deep_last)
-        except:
+            self.__deep_last = cv2.imdecode(np.frombuffer(msg.data, np.uint8), cv2.IMREAD_UNCHANGED)
+            self.get_logger().info(str(self.__deep_last))
+            cv2.imwrite('/home/sonia/ssd/image_deep.jpg', np.frombuffer(msg.data, np.uint8))
+            self.get_logger().info("finish")
+        except Exception as e:
+            self.get_logger().info(str(e))
             pass
 
     def actualise_deep(self):
@@ -193,19 +204,21 @@ class VisionNode(Node):
         if(self.__actual is None):
             self.actualise_deep()
             if (self.__actual is None):
-                return 15
+                return float(15*4)
         dictValue = dict()
         resized_image = self.__actual
-        for i in range(min(x1,1280),min(x2,1280)):
-            for j in range(min(y1,720),min(720,y2)):
-                if( not resized_image[j,i] <=5):
+        for i in range(min(max(0,x1),1280),min(max(0,x2),1280)):
+            for j in range(min(max(0,y1),720),min(max(0,y2),720)):
+                if( not resized_image[j,i] >=250):
                     if not resized_image[j,i] in dictValue.keys():
                         dictValue[resized_image[j,i]]=0
                     dictValue[resized_image[j,i]]+=1
         histogram = sorted(dictValue.items())
-        max1 = 255
+        max1 = 65055
+        # max1 = 255
         valueMax1 = 0
-        max2 = 255
+        max2 = 65055
+        # max2 = 255
         valueMax2 = 0
         for keys,value in histogram:
             if (value) > valueMax1:
@@ -217,9 +230,9 @@ class VisionNode(Node):
                 max2 = keys
                 valueMax2 = value
         if valueMax2 > (x2-x1)*(y2-y1)*0.05 and max1>=250:
-            return (max2/255)*15
+            return float(max2/2)
         else:
-            return (max1/255)*15
+            return float(max1/2)
         
 
 
@@ -236,6 +249,7 @@ class VisionNode(Node):
             pad (Tuple[int, int]): Padding values (top, left) applied to the image.
         """
         shape = img.shape[:2]  # current shape [height, width]
+        self.get_logger().info(str(img))
 
         # Scale ratio (new / old)
         r = min(new_shape[0] / shape[0], new_shape[1] / shape[1])

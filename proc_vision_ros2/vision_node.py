@@ -25,8 +25,7 @@ else:
     OUTPUT_DIR = '/home/sonia/output_ai/'
 SAVE_OUTPUT = False
 
-AREA_OF_SEE = 2
-
+NUMBER_DETECTION = 250
 
 class VisionNode(Node):
 
@@ -43,7 +42,6 @@ class VisionNode(Node):
 
         self.__front_cam_sub = self.create_subscription(CompressedImage, "zed/zed_node/left/image_rect_color/compressed", self.__img_front_callback, 10)
         self.__front_cam_sim = self.create_subscription(CompressedImage, "proc_simulation/front/compressed", self.__img_front_callback, 10)
-        # self.__front_cam_depth = self.create_subscription(Image, "zed/zed_node/depth/depth_registered", self.__depth_front_callback, 10)
         
         self.__bottom_cam_sub = self.create_subscription(CompressedImage, "camera_array/bottom/image_raw/compressed", self.__img_bottom_callback, qos)
         self.__bottom_cam_sim = self.create_subscription(CompressedImage, "proc_simulation/bottom/compressed", self.__img_bottom_callback, 10)
@@ -115,18 +113,6 @@ class VisionNode(Node):
             self.get_logger().info("Image Bottom received!!")
             self.__classif_bottom_pub.publish(self.__img_detection(msg, self.model_bottom))
 
-    # def __depth_front_callback(self, msg: Image):
-    #     if self.camera_front:
-    #         self.get_logger().info(f"Depth {msg.header.frame_id} received!!")
-    #         depth_raw = np.frombuffer(msg.data, np.uint8)
-    #         depth = cv2.imdecode(depth_raw, cv2.IMREAD_GRAYSCALE)
-    #         depth2 = cv2.imdecode(depth_raw, cv2.IMREAD_ANYDEPTH)
-    #         self.get_logger().info(f"depth_raw shape: {depth_raw.shape}, dtype: {depth_raw.dtype}")
-    #         if depth is not None:
-    #             self.get_logger().info(f"Depth image max: {depth.max()}, min: {depth.min()}, mean: {depth.mean()}")
-    #         if depth2 is not None:
-    #             self.get_logger().info(f"Depth2 image max: {depth2.max()}, min: {depth2.min()}, mean: {depth2.mean()}")
-
     def __img_detection(self, msg: CompressedImage, model: YOLOv8) -> DetectionArray:
         try:
             image = cv2.imdecode(np.frombuffer(msg.data, np.uint8), cv2.IMREAD_COLOR)
@@ -136,9 +122,8 @@ class VisionNode(Node):
                 self.get_logger().info(f"Image size in vision node = {image.shape[0]}x{image.shape[1]}")
                 for detect in detections.detected_object:
                     self.get_logger().info(f"Detection : {detect.class_name}")
-                    self.get_logger().info(str(self.get_deep((detect.bottom_right_x+detect.top_left_x)//2,(detect.bottom_right_y+detect.top_left_y)//2,672,376)))
-                    self.get_logger().info(str(self.get_deep_istogram(int(detect.top_left_x), int(detect.bottom_right_x), int(detect.top_left_y) ,int(detect.bottom_right_y),672,376)))
-                    detect.distance = self.get_deep_istogram(int(detect.top_left_x), int(detect.bottom_right_x), int(detect.top_left_y) ,int(detect.bottom_right_y),672,376)
+                    # self.get_logger().info(str(self.get_deep_istogram(int(detect.top_left_x), int(detect.bottom_right_x), int(detect.top_left_y) ,int(detect.bottom_right_y))))
+                    detect.distance = self.get_deep_istogram(int(detect.top_left_x), int(detect.bottom_right_x), int(detect.top_left_y) ,int(detect.bottom_right_y))
                 # self.print_results(image, detections)
             return detections
         except Exception as e:
@@ -162,115 +147,64 @@ class VisionNode(Node):
         if len(results.detected_object) > 0:
             cv2.imwrite('/home/sonia/ssd/image_window.jpg', img_res)
 
-    def __get_depth(self, msg: Image):
+    def __get_depth(self, msg: Image) -> None:
+        """Function to received the deep image and write
+
+        Args:
+            msg (Image): image received
+        """
         try:
-            
-            #self.__deep_last = cv2.imdecode(np.frombuffer(msg.data, np.uint16), cv2.IMREAD_ANYDEPTH)
             self.__deep_last = self.br.imgmsg_to_cv2(msg)
-            self.get_logger().info(str(len(msg.data)))
-            self.get_logger().info(str(len(np.frombuffer(msg.data, np.uint16))))
-            self.get_logger().info(str(self.__deep_last))
-            # self.get_logger().info(str(len(self.__deep_last)))
-            # self.get_logger().info(str(len(self.__deep_last[0])))
-            cv2.imwrite('/home/sonia/ssd/image_deep.tif', self.__deep_last)
-            self.get_logger().info("finish")
+            if (SAVE_OUTPUT):
+                cv2.imwrite(OUTPUT_DIR+'image_deep.tif', self.__deep_last)
         except Exception as e:
             self.get_logger().info(str(e))
-            pass
 
-    def actualise_deep(self):
+    def actualise_deep(self) -> None:
+        """Function to define the deep to use
+        """
         self.__actual = self.__deep_last
-
-    def get_deep(self, x,y,w,h) -> int:
-        if(self.__actual is None):
-            self.actualise_deep()
-            if (self.__actual is None):
-                return 15
-        sumf = 0
-        number = 0
-        resized_image = self.__actual
-        # resized_image = cv2.resize(self.__actual, (w, h))
-        if(x<AREA_OF_SEE):
-            xStart = 0
-        else:
-            xStart = x- AREA_OF_SEE
-        if(y<AREA_OF_SEE):
-            yStart = 0
-        else:
-            yStart = y- AREA_OF_SEE
-        for i in range(AREA_OF_SEE*2+1):
-            if x+i< w:
-                for j in range(AREA_OF_SEE*2+1):
-                    if y+j<h:
-                        sumf += resized_image[int(yStart+j)][int(xStart+i)]
-                        number+=1
-        if number <=0:
-            return 0
-        return ((sumf/number)/255)*15
         
-    def get_deep_istogram(self, x1,x2,y1,y2,w,h) -> int:
+    def get_deep_istogram(self, x1: int,x2: int,y1: int,y2: int) -> int:
+        """function to return the distance of a object on a image
+
+        Args:
+            x1 (int): cordoninante in x of top left point
+            x2 (int): cordoninante in x of bottom rigth
+            y1 (int): cordoninante in y of top left point
+            y2 (int): cordoninante in y of bottom rigth
+
+        Returns:
+            int: the distance of object
+        """
         if(self.__actual is None):
             self.actualise_deep()
             if (self.__actual is None):
                 return float(15*4)
-        dictValue = dict()
+        dict_value = dict()
         resized_image = self.__actual
         for i in range(min(max(0,x1),1280),min(max(0,x2),1280)):
             for j in range(min(max(0,y1),720),min(max(0,y2),720)):
                 if( not resized_image[j,i] >=250):
-                    if not resized_image[j,i] in dictValue.keys():
-                        dictValue[resized_image[j,i]]=0
-                    dictValue[resized_image[j,i]]+=1
-        histogram = sorted(dictValue.items())
+                    if not resized_image[j,i] in dict_value.keys():
+                        dict_value[resized_image[j,i]]=0
+                    dict_value[resized_image[j,i]]+=1
+        histogram = sorted(dict_value.items())
         max1 = 65055
-        # max1 = 255
-        valueMax1 = 0
+        value_max1 = 0
         max2 = 65055
-        # max2 = 255
-        valueMax2 = 0
+        value_max2 = 0
         for keys,value in histogram:
-            if (value) > valueMax1:
+            if (value) > value_max1:
                 max2 = max1
-                valueMax2 = valueMax1
-                valueMax1 = value
+                value_max2 = value_max1
+                value_max1 = value
                 max1 = keys
-            elif value > valueMax2:
+            elif value > value_max2:
                 max2 = keys
-                valueMax2 = value
-        if valueMax2 > (x2-x1)*(y2-y1)*0.05 and max1>=250:
+                value_max2 = value
+        # part to remove background issue of deep
+        if value_max2 > (x2-x1)*(y2-y1)*0.05 and max1>=NUMBER_DETECTION:
             return float(max2/1000)
         else:
             return float(max1/1000)
-        
-
-
-    def letterbox(self, img: np.ndarray, new_shape: Tuple[int, int] = (640, 640)) -> np.ndarray:
-        """
-        Resize and reshape images while maintaining aspect ratio by adding padding.
-
-        Args:
-            img (np.ndarray): Input image to be resized.
-            new_shape (Tuple[int, int]): Target shape (height, width) for the image.
-
-        Returns:
-            img (np.ndarray): Resized and padded image.
-            pad (Tuple[int, int]): Padding values (top, left) applied to the image.
-        """
-        shape = img.shape[:2]  # current shape [height, width]
-        self.get_logger().info(str(img))
-
-        # Scale ratio (new / old)
-        r = min(new_shape[0] / shape[0], new_shape[1] / shape[1])
-
-        # Compute padding
-        new_unpad = int(round(shape[1] * r)), int(round(shape[0] * r))
-        dw, dh = (new_shape[1] - new_unpad[0]) / 2, (new_shape[0] - new_unpad[1]) / 2  # wh padding
-
-        if shape[::-1] != new_unpad:  # resize
-            img = cv2.resize(img, new_unpad, interpolation=cv2.INTER_LINEAR)
-        top, bottom = int(round(dh - 0.1)), int(round(dh + 0.1))
-        left, right = int(round(dw - 0.1)), int(round(dw + 0.1))
-
-        img = cv2.copyMakeBorder(img, top, bottom, left, right, cv2.BORDER_CONSTANT, 0)
-
-        return img

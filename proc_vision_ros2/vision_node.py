@@ -7,8 +7,8 @@ from rclpy.parameter import Parameter
 from sensor_msgs.msg import Image, CompressedImage
 from rclpy.qos import QoSProfile, ReliabilityPolicy
 import numpy as np
-from PIL import Image
 import os
+from cv_bridge import CvBridge
 import cv2
 from .yolov8 import YOLOv8
 from sonia_common_ros2.msg import DetectionArray, Detection
@@ -56,9 +56,11 @@ class VisionNode(Node):
         self.__classif_bottom_pub = self.create_publisher(DetectionArray, "proc_vision/bottom/classif", 10)
 
         #Deep
-        self.__zed_depth = self.create_subscription(CompressedImage, "zed/zed_node/depth/depth_registered/compressed", self.__get_depth, 10)
+        self.__zed_depth = self.create_subscription(Image, "zed/zed_node/depth/depth_registered", self.__get_depth, 10)
         self.__actual = None
         self.__deep_last = None
+
+        self.br = CvBridge()
 
         if SAVE_OUTPUT:
             if not os.path.exists(OUTPUT_DIR):
@@ -160,11 +162,17 @@ class VisionNode(Node):
         if len(results.detected_object) > 0:
             cv2.imwrite('/home/sonia/ssd/image_window.jpg', img_res)
 
-    def __get_depth(self, msg: CompressedImage):
+    def __get_depth(self, msg: Image):
         try:
-            self.__deep_last = cv2.imdecode(np.frombuffer(msg.data, np.uint8), cv2.IMREAD_UNCHANGED)
+            
+            #self.__deep_last = cv2.imdecode(np.frombuffer(msg.data, np.uint16), cv2.IMREAD_ANYDEPTH)
+            self.__deep_last = self.br.imgmsg_to_cv2(msg)
+            self.get_logger().info(str(len(msg.data)))
+            self.get_logger().info(str(len(np.frombuffer(msg.data, np.uint16))))
             self.get_logger().info(str(self.__deep_last))
-            cv2.imwrite('/home/sonia/ssd/image_deep.jpg', np.frombuffer(msg.data, np.uint8))
+            # self.get_logger().info(str(len(self.__deep_last)))
+            # self.get_logger().info(str(len(self.__deep_last[0])))
+            cv2.imwrite('/home/sonia/ssd/image_deep.tif', self.__deep_last)
             self.get_logger().info("finish")
         except Exception as e:
             self.get_logger().info(str(e))
@@ -230,9 +238,9 @@ class VisionNode(Node):
                 max2 = keys
                 valueMax2 = value
         if valueMax2 > (x2-x1)*(y2-y1)*0.05 and max1>=250:
-            return float(max2/2)
+            return float(max2/1000)
         else:
-            return float(max1/2)
+            return float(max1/1000)
         
 
 

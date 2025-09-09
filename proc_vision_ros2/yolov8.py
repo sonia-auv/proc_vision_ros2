@@ -64,6 +64,15 @@ class YOLOv8:
         # Create an inference session using the ONNX model and specify execution providers
         self.session = ort.InferenceSession(self.onnx_model, providers=["CUDAExecutionProvider"])#, "CPUExecutionProvider"])
 
+        # Get the model inputs
+        model_inputs = self.session.get_inputs()
+        self.model_name = model_inputs[0].name
+
+        # Store the shape of the input for later use
+        input_shape = model_inputs[0].shape
+        self.input_width = input_shape[2]
+        self.input_height = input_shape[3]
+
     def preprocess_image(self, img):
         ycrcb_img = cv2.cvtColor(np.array(img), cv2.COLOR_BGR2YCrCb)
         y, cr, cb = cv2.split(ycrcb_img)
@@ -141,17 +150,14 @@ class YOLOv8:
             pad (Tuple[int, int]): Padding values (top, left) applied during letterboxing.
         """
 
-        self.node.get_logger().info(f"step 1.3.1")
         # Get the height and width of the input image
         self.img_height, self.img_width = self.input_image.shape[:2]
 
         # Convert the image color space from BGR to RGB
         img = cv2.cvtColor(self.input_image, cv2.COLOR_BGR2RGB)
 
-        self.node.get_logger().info(f"step 1.3.2")
         img = self.preprocess_image(img)
 
-        self.node.get_logger().info(f"step 1.3.3")
         img, pad = self.letterbox(img, (self.input_width, self.input_height))
 
         # Normalize the image data by dividing it by 255.0
@@ -160,13 +166,9 @@ class YOLOv8:
         # Transpose the image to have the channel dimension as the first dimension
         image_data = np.transpose(image_data, (2, 0, 1))  # Channel first
 
-        self.node.get_logger().info(f"step 1.3.4")
         # Expand the dimensions of the image data to match the expected input shape
         image_data = np.expand_dims(image_data, axis=0).astype(np.float32)
 
-        self.node.get_logger().info(f"step 1.3.5")
-        # Return the preprocessed image data
-        self.node.get_logger().info(f"Input image shape: {image_data.shape}, Padding: {pad}")
         return image_data, pad
 
     def postprocess(self, input_image: np.ndarray, output: List[np.ndarray], pad: Tuple[int, int]) -> DetectionArray:
@@ -187,9 +189,6 @@ class YOLOv8:
         # Transpose and squeeze the output to match the expected shape
         outputs = np.transpose(np.squeeze(output[0]))
 
-        # Get the number of rows in the outputs array
-        rows = outputs.shape[0]
-
         # Lists to store the bounding boxes, scores, and class IDs of the detections
         boxes = []
         scores = []
@@ -201,7 +200,7 @@ class YOLOv8:
         outputs[:, 1] -= pad[0]
         
         # Iterate over each row in the outputs array
-        size = outputs[0:rows, 4:]
+        size = outputs[0:outputs.shape[0], 4:]
         row_indices, col_indices = np.where(size > self.confidence_thres)
         for indice in range(row_indices.size):
 
@@ -220,35 +219,6 @@ class YOLOv8:
             class_ids.append(class_id)
             scores.append(float(outputs[row_indices[indice]][col_indices[indice]+4]))
             boxes.append([left, top, width, height])
-
-        # self.node.get_logger().info(f"step 1.5.3")
-
-        # for i in range(rows):
-        #     # Extract the class scores from the current row
-        #     classes_scores = outputs[i][4:]
-
-        #     # Find the maximum score among the class scores
-        #     max_score = np.amax(classes_scores)
-
-        #     # If the maximum score is above the confidence threshold
-        #     if max_score >= self.confidence_thres:
-        #         self.node.get_logger().info(f"indice 2")
-        #         # Get the class ID with the highest score
-        #         # class_id = np.argmax(classes_scores)
-
-        #         # # Extract the bounding box coordinates from the current row
-        #         # x, y, w, h = outputs[i][0], outputs[i][1], outputs[i][2], outputs[i][3]
-
-        #         # # Calculate the scaled coordinates of the bounding box
-        #         # left = int((x - w / 2) / gain)
-        #         # top = int((y - h / 2) / gain)
-        #         # width = int(w / gain)
-        #         # height = int(h / gain)
-
-        #         # Add the class ID, score, and box coordinates to the respective lists
-        #         # class_ids.append(class_id)
-        #         # scores.append(float(max_score))
-        #         # boxes.append([left, top, width, height])
 
         # Apply non-maximum suppression to filter out overlapping bounding boxes
         indices = cv2.dnn.NMSBoxes(boxes, scores, .4, .6)
@@ -294,28 +264,14 @@ class YOLOv8:
         Returns:
             (np.ndarray): The output image with drawn detections.
         """
-        self.node.get_logger().info(f"step 1.1")
         self.input_image = image
         self.frame_id = frame_id
 
-        # Get the model inputs
-        model_inputs = self.session.get_inputs()
-        self.node.get_logger().info(f"step 1.2")
-
-        # Store the shape of the input for later use
-        input_shape = model_inputs[0].shape
-        self.input_width = input_shape[2]
-        self.input_height = input_shape[3]
-        self.node.get_logger().info(f"step 1.3")
-
         # Preprocess the image data
         img_data, pad = self.preprocess()
-        self.node.get_logger().info(f"step 1.4")
 
         # Run inference using the preprocessed image data
-        outputs = self.session.run(None, {model_inputs[0].name: img_data})
-        self.node.get_logger().info(f"step 1.5")
-
+        outputs = self.session.run(None, {self.model_name: img_data})
         # Perform post-processing on the outputs to obtain output image
         return self.postprocess(self.input_image, outputs, pad)
 

@@ -117,17 +117,11 @@ class VisionNode(Node):
         try:
             self.get_logger().info(f"start")
             self.actualise_deep()
-            image = cv2.imdecode(np.frombuffer(msg.data, np.uint8), cv2.IMREAD_COLOR)
-            detections = model.detect(image, msg.header.frame_id)
-            self.get_logger().info(f"step 3")
+            detections = model.detect(cv2.imdecode(np.frombuffer(msg.data, np.uint8), cv2.IMREAD_COLOR), msg.header.frame_id)
             if(self.camera_front):
-                self.get_logger().info(f"Image size in vision node = {image.shape[0]}x{image.shape[1]}")
-                self.get_logger().info(f"step 4")
                 for detect in detections.detected_object:
-                    self.get_logger().info(f"Detection : {detect.class_name}")
                     # self.get_logger().info(str(self.get_deep_istogram(int(detect.top_left_x), int(detect.bottom_right_x), int(detect.top_left_y) ,int(detect.bottom_right_y))))
                     detect.distance = self.get_deep_istogram(int(detect.top_left_x), int(detect.bottom_right_x), int(detect.top_left_y) ,int(detect.bottom_right_y))
-                    self.get_logger().info(f"step 5")
             return detections
         except Exception as e:
             self.get_logger().info(f"Vision node failure :{e}")

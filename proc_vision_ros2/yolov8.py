@@ -1,10 +1,8 @@
-
 from typing import List, Tuple
-import os
 import cv2
+import yaml
 import numpy as np
 import onnxruntime as ort
-import yaml
 from sonia_common_ros2.msg import Detection, DetectionArray
 
 

@@ -1,31 +1,28 @@
 import sys
-sys.path.append("/home/sonia/ssd/pip_pkg")
-
-from rclpy.node import Node
-from typing import Tuple
-from rclpy.parameter import Parameter
-from sensor_msgs.msg import Image, CompressedImage
-from rclpy.qos import QoSProfile, ReliabilityPolicy
-import numpy as np
 import os
-from cv_bridge import CvBridge
+import traceback
 import cv2
-from .yolov8 import YOLOv8
 from sonia_common_ros2.msg import DetectionArray, Detection
 from sonia_common_ros2.srv import AiActivationService
-import traceback
-if os.path.exists('/home/sonia/ssd/ros2_sonia_ws/src/proc_vision_ros2/models/'):
-    MODEL_DIR = '/home/sonia/ssd/ros2_sonia_ws/src/proc_vision_ros2/models/'
+from rclpy.qos import QoSProfile, ReliabilityPolicy
+from rclpy.node import Node
+from rclpy.parameter import Parameter
+from sensor_msgs.msg import Image, CompressedImage
+import numpy as np
+from cv_bridge import CvBridge
+from .yolov8 import YOLOv8
+
+sys.path.append("/home/sonia/ssd/pip_pkg")
+if os.path.exists(os.environ['SONIA_WS']+'/src/proc_vision_ros2/models/'):
+    MODEL_DIR = os.environ['SONIA_WS']+'/src/proc_vision_ros2/models/'
 else:
-    MODEL_DIR = '/home/sonia/ros2_sonia_ws/src/proc_vision_ros2/models/'
+    MODEL_DIR = os.environ['SONIA_WS']+'/src/proc_vision_ros2/models/'
 
 if os.path.exists('/home/sonia/ssd/output_ai/'):
     OUTPUT_DIR = '/home/sonia/ssd/output_ai/'
 else:
     OUTPUT_DIR = '/home/sonia/output_ai/'
 SAVE_OUTPUT = False
-
-NUMBER_DETECTION = 250
 
 class VisionNode(Node):
 
@@ -94,12 +91,12 @@ class VisionNode(Node):
         if self.camera_front:
             self.get_logger().info(f"Front ON -> Model : {model_name}")
         else:
-            self.get_logger().info(f"Front OFF")
+            self.get_logger().info("Front OFF")
 
         if self.camera_bottom:
             self.get_logger().info(f"Bottom ON -> Model : {model_name}")
         else:
-            self.get_logger().info(f"Bottom OFF")
+            self.get_logger().info("Bottom OFF")
 
         return response
 
@@ -166,9 +163,9 @@ class VisionNode(Node):
 
         Args:
             x1 (int): cordoninante in x of top left point
-            x2 (int): cordoninante in x of bottom rigth
+            x2 (int): cordoninante in x of bottom right
             y1 (int): cordoninante in y of top left point
-            y2 (int): cordoninante in y of bottom rigth
+            y2 (int): cordoninante in y of bottom right
 
         Returns:
             int: the distance of object

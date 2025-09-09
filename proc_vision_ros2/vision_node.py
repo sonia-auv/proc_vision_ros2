@@ -115,16 +115,19 @@ class VisionNode(Node):
 
     def __img_detection(self, msg: CompressedImage, model: YOLOv8) -> DetectionArray:
         try:
+            self.get_logger().info(f"start")
+            self.actualise_deep()
             image = cv2.imdecode(np.frombuffer(msg.data, np.uint8), cv2.IMREAD_COLOR)
             detections = model.detect(image, msg.header.frame_id)
+            self.get_logger().info(f"step 3")
             if(self.camera_front):
-                self.actualise_deep()
                 self.get_logger().info(f"Image size in vision node = {image.shape[0]}x{image.shape[1]}")
+                self.get_logger().info(f"step 4")
                 for detect in detections.detected_object:
                     self.get_logger().info(f"Detection : {detect.class_name}")
                     # self.get_logger().info(str(self.get_deep_istogram(int(detect.top_left_x), int(detect.bottom_right_x), int(detect.top_left_y) ,int(detect.bottom_right_y))))
                     detect.distance = self.get_deep_istogram(int(detect.top_left_x), int(detect.bottom_right_x), int(detect.top_left_y) ,int(detect.bottom_right_y))
-                # self.print_results(image, detections)
+                    self.get_logger().info(f"step 5")
             return detections
         except Exception as e:
             self.get_logger().info(f"Vision node failure :{e}")
@@ -180,31 +183,33 @@ class VisionNode(Node):
         if(self.__actual is None):
             self.actualise_deep()
             if (self.__actual is None):
-                return float(15*4)
-        dict_value = dict()
-        resized_image = self.__actual
-        for i in range(min(max(0,x1),1280),min(max(0,x2),1280)):
-            for j in range(min(max(0,y1),720),min(max(0,y2),720)):
-                if( not resized_image[j,i] >=250):
-                    if not resized_image[j,i] in dict_value.keys():
-                        dict_value[resized_image[j,i]]=0
-                    dict_value[resized_image[j,i]]+=1
-        histogram = sorted(dict_value.items())
-        max1 = 65055
-        value_max1 = 0
-        max2 = 65055
-        value_max2 = 0
-        for keys,value in histogram:
-            if (value) > value_max1:
-                max2 = max1
-                value_max2 = value_max1
-                value_max1 = value
-                max1 = keys
-            elif value > value_max2:
-                max2 = keys
-                value_max2 = value
+                return float(60)
+        # resized_image = self.__actual
+        # for i in range(min(max(0,x1),1280),min(max(0,x2),1280)):
+        #     for j in range(min(max(0,y1),720),min(max(0,y2),720)):
+        #         if not resized_image[j,i] in dict_value.keys():
+        #             dict_value[resized_image[j,i]]=0
+        #         dict_value[resized_image[j,i]]+=1
+        elem = self.__actual[min(max(0,x1),1280):min(max(0,x2),1280), min(max(0,y1),720):min(max(0,y2),720)]
+        histo = np.histogram(elem,range = (0,65535),bins=1)[0]
+        # self.get_logger().info(str(histo))
+        # histogram = sorted(dict_value.items())
+        # max1 = 65535
+        # value_max1 = 0
+        # max2 = 65535
+        # value_max2 = 0
+        # for keys,value in histogram:
+        #     if (value) > value_max1:
+        #         max2 = max1
+        #         value_max2 = value_max1
+        #         value_max1 = value
+        #         max1 = keys
+        #     elif value > value_max2:
+        #         max2 = keys
+        #         value_max2 = value
+        return float(histo.argmax()/1000)
         # part to remove background issue of deep
-        if value_max2 > (x2-x1)*(y2-y1)*0.05 and max1>=NUMBER_DETECTION:
-            return float(max2/1000)
-        else:
-            return float(max1/1000)
+        # if value_max2 > (x2-x1)*(y2-y1)*0.05 and max1>=NUMBER_DETECTION:
+        #     return float(histo.argmax()/1000)
+        # else:
+        #     return float(max1/1000)

@@ -123,20 +123,6 @@ class VisionNode(Node):
             detections.detected_object = []
             return detections
 
-
-    def print_results(self, img, results: DetectionArray):
-        res:Detection
-        for res in results.detected_object:
-            img_res = cv2.rectangle(img, 
-                          (int(res.top_left_x), int(res.top_left_y)), 
-                          (int(res.bottom_right_x), int(res.bottom_right_y)),
-                          (0, 255, 0),
-                          1)
-            img_res = cv2.putText(img_res, f"{res.class_name} {res.confidence:.2f}", 
-                                  (int(res.top_left_x), int(res.top_left_y-10)), 1, 1, (0, 255, 0), 1)
-        if len(results.detected_object) > 0:
-            cv2.imwrite('/home/sonia/ssd/image_window.jpg', img_res)
-
     def __get_depth(self, msg: Image) -> None:
         """Function to received the deep image and write
 

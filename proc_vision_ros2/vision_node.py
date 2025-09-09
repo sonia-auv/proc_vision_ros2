@@ -13,10 +13,7 @@ from cv_bridge import CvBridge
 from .yolov8 import YOLOv8
 
 sys.path.append("/home/sonia/ssd/pip_pkg")
-if os.path.exists(os.environ['SONIA_WS']+'/src/proc_vision_ros2/models/'):
-    MODEL_DIR = os.environ['SONIA_WS']+'/src/proc_vision_ros2/models/'
-else:
-    MODEL_DIR = os.environ['SONIA_WS']+'/src/proc_vision_ros2/models/'
+MODEL_DIR = os.environ['SONIA_WS']+'/src/proc_vision_ros2/models/'
 
 if os.path.exists('/home/sonia/ssd/output_ai/'):
     OUTPUT_DIR = '/home/sonia/ssd/output_ai/'

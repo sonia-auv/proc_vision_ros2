@@ -115,12 +115,11 @@ class VisionNode(Node):
 
     def __img_detection(self, msg: CompressedImage, model: YOLOv8) -> DetectionArray:
         try:
-            self.get_logger().info(f"start")
             self.actualise_deep()
             detections = model.detect(cv2.imdecode(np.frombuffer(msg.data, np.uint8), cv2.IMREAD_COLOR), msg.header.frame_id)
             if(self.camera_front):
+                #get the depth for each element see by the front camera
                 for detect in detections.detected_object:
-                    # self.get_logger().info(str(self.get_deep_istogram(int(detect.top_left_x), int(detect.bottom_right_x), int(detect.top_left_y) ,int(detect.bottom_right_y))))
                     detect.distance = self.get_deep_istogram(int(detect.top_left_x), int(detect.bottom_right_x), int(detect.top_left_y) ,int(detect.bottom_right_y))
             return detections
         except Exception as e:
@@ -178,32 +177,11 @@ class VisionNode(Node):
             self.actualise_deep()
             if (self.__actual is None):
                 return float(60)
-        # resized_image = self.__actual
-        # for i in range(min(max(0,x1),1280),min(max(0,x2),1280)):
-        #     for j in range(min(max(0,y1),720),min(max(0,y2),720)):
-        #         if not resized_image[j,i] in dict_value.keys():
-        #             dict_value[resized_image[j,i]]=0
-        #         dict_value[resized_image[j,i]]+=1
-        elem = self.__actual[min(max(0,x1),1280):min(max(0,x2),1280), min(max(0,y1),720):min(max(0,y2),720)]
-        histo = np.histogram(elem,range = (0,65535),bins=1)[0]
-        # self.get_logger().info(str(histo))
-        # histogram = sorted(dict_value.items())
-        # max1 = 65535
-        # value_max1 = 0
-        # max2 = 65535
-        # value_max2 = 0
-        # for keys,value in histogram:
-        #     if (value) > value_max1:
-        #         max2 = max1
-        #         value_max2 = value_max1
-        #         value_max1 = value
-        #         max1 = keys
-        #     elif value > value_max2:
-        #         max2 = keys
-        #         value_max2 = value
+
+        # part to get all pixel in bouding box
+        area_see = self.__actual[min(max(0,x1),1280):min(max(0,x2),1280), min(max(0,y1),720):min(max(0,y2),720)]
+
+        # part to generate the histogram to get the most probable value for the depth
+        histo = np.histogram(area_see,range = (0,65535),bins=65535)[0]
+
         return float(histo.argmax()/1000)
-        # part to remove background issue of deep
-        # if value_max2 > (x2-x1)*(y2-y1)*0.05 and max1>=NUMBER_DETECTION:
-        #     return float(histo.argmax()/1000)
-        # else:
-        #     return float(max1/1000)

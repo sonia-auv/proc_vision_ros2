@@ -11,6 +11,7 @@ from sensor_msgs.msg import Image, CompressedImage
 import numpy as np
 from cv_bridge import CvBridge
 from .yolov8 import YOLOv8
+import math
 
 sys.path.append("/home/sonia/ssd/pip_pkg")
 MODEL_DIR = os.environ['SONIA_WS']+'/src/proc_vision_ros2/models/'
@@ -141,6 +142,57 @@ class VisionNode(Node):
         """
         self.__actual = self.__deep_last
         
+    def get_angle(self, x1: int,x2: int,y1: int,y2: int) -> int:
+        """function to return the distance of a object on a image
+
+        Args:
+            x1 (int): cordoninante in x of top left point
+            x2 (int): cordoninante in x of bottom right
+            y1 (int): cordoninante in y of top left point
+            y2 (int): cordoninante in y of bottom right
+
+        Returns:
+            int: the distance of object
+        """
+        if(self.__actual is None):
+            self.actualise_deep()
+            if (self.__actual is None):
+                return float(60)
+            
+        x10 = (x1+x2)//20
+
+        # part to get all pixel in bouding box
+        area_seeLeft = self.__actual[min(max(0,x1),1280):min(max(0,x1),1280) + x10, min(max(0,y1),720):min(max(0,y2),720)]
+        area_seeMid = self.__actual[(min(max(0,x1),1280)+min(max(0,x2),1280))//2 - (x10//2) :(min(max(0,x1),1280)+min(max(0,x2),1280))//2 + (x10//2), min(max(0,y1),720):min(max(0,y2),720)]
+        # area_seeRigth = self.__actual[min(max(0,x2),1280) - x10 :min(max(0,x2),1280), min(max(0,y1),720):min(max(0,y2),720)]
+
+        # part to generate the histogram to get the most probable value for the depth
+        distanceX1 = np.histogram(area_seeMid,range = (0,5000),bins=500)[0].argmax()
+        distanceX2 = np.histogram(area_seeLeft,range = (0,5000),bins=500)[0].argmax()
+        # distanceX3 = np.histogram(area_seeRigth,range = (0,5000),bins=500)[0].argmax()
+
+        centreX = (x1 + x2) // 2
+
+        angleX = (640 - centreX)*41/1280
+
+        angle2 = (640 - x1)*41/1280
+
+        pointx1 = math.cos(angleX) * distanceX1
+        pointy1 = math.sin(angleX) * distanceX1
+
+        pointx2 = math.cos(angle2) * distanceX2
+        pointy2 = math.sin(angle2) * distanceX2
+
+        hypo = math.sqrt(math.pow(pointx1-pointx2,2)+math.pow(pointy1-pointy2,2))
+        adja = math.sqrt(math.pow(pointy1-pointy2,2))
+
+        if distanceX1 > distanceX2:
+            angleTeta = 90 - math.acos(adja/hypo)
+        else:
+            angleTeta = - math.acos(adja/hypo)
+
+        return (angleX, angleTeta)
+        
     def get_deep_istogram(self, x1: int,x2: int,y1: int,y2: int) -> int:
         """function to return the distance of a object on a image
 
@@ -162,6 +214,6 @@ class VisionNode(Node):
         area_see = self.__actual[min(max(0,x1),1280):min(max(0,x2),1280), min(max(0,y1),720):min(max(0,y2),720)]
 
         # part to generate the histogram to get the most probable value for the depth
-        histo = np.histogram(area_see,range = (0,65535),bins=65535)[0]
+        histo = np.histogram(area_see,range = (0,65535),bins=6553)[0]
 
         return float(histo.argmax()/1000)

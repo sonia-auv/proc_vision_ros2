@@ -228,7 +228,6 @@ class YOLOv8:
         # Iterate over the selected indices after non-maximum suppression
         for i_array in indices:
             i = i_array[0]
-            self.node.get_logger().info(f"Detection {i}: Score: {scores[i]}, Class ID: {class_ids[i]} -> {self.classes[int(class_ids[i])]}")
             classif = Detection()
             classif.top_left_x = float(boxes[i][0])
             classif.top_left_y = float(boxes[i][1])

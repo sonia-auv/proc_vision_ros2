@@ -102,12 +102,10 @@ class VisionNode(Node):
 
     def __img_front_callback(self, msg: CompressedImage):
         if self.camera_front:
-            self.get_logger().info(f"Image front {msg.header.frame_id} received!!")
             self.__classif_front_pub.publish(self.__img_detection(msg, self.model_front))
 
     def __img_bottom_callback(self, msg: Image):
         if self.camera_bottom:
-            self.get_logger().info("Image Bottom received!!")
             self.__classif_bottom_pub.publish(self.__img_detection(msg, self.model_bottom))
 
     def __img_detection(self, msg: CompressedImage, model: YOLOv8) -> DetectionArray:
@@ -122,6 +120,7 @@ class VisionNode(Node):
                     detect.angle_alpha = angle_alpha
                     detect.angle_teta = angle_teta
                     detect.distance_teta = distance_teta
+                    self.get_logger().info("angle_alpha"+ str(angle_alpha))
             return detections
         except Exception as e:
             self.get_logger().info(f"Vision node failure :{e}")

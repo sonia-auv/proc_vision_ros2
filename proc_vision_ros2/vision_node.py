@@ -191,6 +191,8 @@ class VisionNode(Node):
         hypo = math.sqrt(math.pow(pointx1-pointx2,2)+math.pow(pointy1-pointy2,2))
         adja = math.sqrt(math.pow(pointx1-pointx2,2))
 
+        if hypo == 0:
+            return angleX,0,0
         if pointy1 < pointy2:
             angleTeta = 90 - math.acos(adja/hypo)
         else:

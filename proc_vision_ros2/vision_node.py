@@ -10,10 +10,12 @@ from rclpy.parameter import Parameter
 from sensor_msgs.msg import Image, CompressedImage
 import numpy as np
 from cv_bridge import CvBridge
-from .yolov8 import YOLOv8
 import math
 
 sys.path.append("/home/sonia/ssd/pip_pkg")
+
+from .yolov8 import YOLOv8
+
 MODEL_DIR = os.environ['SONIA_WS']+'/src/proc_vision_ros2/models/'
 
 if os.path.exists('/home/sonia/ssd/output_ai/'):
@@ -200,7 +202,7 @@ class VisionNode(Node):
         
         newY = math.sin(angleTeta) * pointx1 + math.cos(angleTeta) * pointy1
 
-        return angleX, angleTeta,newY
+        return angleX, angleTeta, newY
         
     def get_deep_istogram(self, x1: int,x2: int,y1: int,y2: int) -> int:
         """function to return the distance of a object on a image

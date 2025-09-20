@@ -116,6 +116,10 @@ class VisionNode(Node):
                 #get the depth for each element see by the front camera
                 for detect in detections.detected_object:
                     detect.distance = self.get_deep_istogram(int(detect.top_left_x), int(detect.bottom_right_x), int(detect.top_left_y) ,int(detect.bottom_right_y))
+                    angle_alpha,angle_teta,distance_teta = self.get_angle(int(detect.top_left_x), int(detect.bottom_right_x), int(detect.top_left_y) ,int(detect.bottom_right_y))
+                    detect.angle_alpha = angle_alpha
+                    detect.angle_teta = angle_teta
+                    detect.distance_teta = distance_teta
             return detections
         except Exception as e:
             self.get_logger().info(f"Vision node failure :{e}")
@@ -157,7 +161,7 @@ class VisionNode(Node):
         if(self.__actual is None):
             self.actualise_deep()
             if (self.__actual is None):
-                return float(60)
+                return float(0),float(0),float(0)
             
         x10 = (x1+x2)//20
 
@@ -196,7 +200,7 @@ class VisionNode(Node):
         
         newY = math.sin(angleTeta) * pointx1 + math.cos(angleTeta) * pointy1
 
-        return (angleX, angleTeta,newY)
+        return angleX, angleTeta,newY
         
     def get_deep_istogram(self, x1: int,x2: int,y1: int,y2: int) -> int:
         """function to return the distance of a object on a image

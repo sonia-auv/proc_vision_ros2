@@ -243,6 +243,9 @@ class YOLOv8:
             classif.frame_id = self.frame_id
             
             classif.distance = float(0)
+            classif.angle_alpha = float(0)
+            classif.angle_teta = float(0)
+            classif.distance_teta = float(0)
             detections.detected_object.append(classif)
             
             if self.draw:

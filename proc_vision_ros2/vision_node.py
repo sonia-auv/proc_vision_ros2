@@ -192,7 +192,7 @@ class VisionNode(Node):
         adja = math.sqrt(math.pow(pointx1-pointx2,2))
 
         if hypo == 0:
-            return angleX,float(0),float(0)
+            return float(angleX),float(0),float(0)
         if pointy1 < pointy2:
             angleTeta = 90 - math.acos(adja/hypo)
         else:
@@ -203,7 +203,7 @@ class VisionNode(Node):
         
         newY = math.sin(angleTeta) * pointx1 + math.cos(angleTeta) * pointy1
 
-        return angleX, angleTeta, newY
+        return float(angleX), float(angleTeta), float(newY)
         
     def get_deep_istogram(self, x1: int,x2: int,y1: int,y2: int) -> int:
         """function to return the distance of a object on a image

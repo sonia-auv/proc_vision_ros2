@@ -130,12 +130,9 @@ class VisionNode(Node):
                     if(detect.class_name == "bin-inner"):
                         angle_alpha,ditance_beta,angle_teta,distance_teta = self.get_angle(int(detect.top_left_x), int(detect.bottom_right_x), int(detect.top_left_y) ,int(detect.bottom_right_y))
                         detect.angle_alpha = angle_alpha
+                        detect.distance_beta = ditance_beta
                         detect.angle_teta = angle_teta
                         detect.distance_teta = distance_teta
-                        self.get_logger().info("angle_alpha "+ str(angle_alpha))
-                        self.get_logger().info("ditance_beta "+ str(ditance_beta))
-                        self.get_logger().info("angle_teta "+ str(angle_teta))
-                        self.get_logger().info("distance_teta "+ str(distance_teta))
             self.get_logger().info("end")
             return detections
         except Exception as e:

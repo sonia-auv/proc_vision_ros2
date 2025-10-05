@@ -244,6 +244,7 @@ class YOLOv8:
             
             classif.distance = float(0)
             classif.angle_alpha = float(0)
+            classif.distance_beta = float(0)
             classif.angle_teta = float(0)
             classif.distance_teta = float(0)
             detections.detected_object.append(classif)

@@ -24,6 +24,14 @@ else:
     OUTPUT_DIR = '/home/sonia/output_ai/'
 SAVE_OUTPUT = False
 
+ZED_VFOV = 52/2
+ZED_HFOV = 82/2
+IMAGE_WIDTH = 1280
+IMAGE_HEIGTH = 720
+
+#Multiplicateur to be in meter
+UNIT=100
+
 class VisionNode(Node):
 
     def __init__(self):
@@ -37,8 +45,8 @@ class VisionNode(Node):
         self.declare_parameter("models", Parameter.Type.STRING_ARRAY) 
         self.__ai_activation_sub = self.create_service(AiActivationService, "proc_vision/ai_activation", self.__ai_activation_callback)
 
-        self.__front_cam_sub = self.create_subscription(CompressedImage, "zed/zed_node/left/image_rect_color/compressed", self.__img_front_callback, 10)
-        self.__front_cam_sim = self.create_subscription(CompressedImage, "proc_simulation/front/compressed", self.__img_front_callback, 10)
+        self.__front_cam_sub = self.create_subscription(Image, "zed/zed_node/left/image_rect_color", self.__img_front_callback, 10)
+        self.__front_cam_sim = self.create_subscription(Image, "proc_simulation/front", self.__img_front_callback, 10)
         
         self.__bottom_cam_sub = self.create_subscription(CompressedImage, "camera_array/bottom/image_raw/compressed", self.__img_bottom_callback, qos)
         self.__bottom_cam_sim = self.create_subscription(CompressedImage, "proc_simulation/bottom/compressed", self.__img_bottom_callback, 10)
@@ -110,17 +118,25 @@ class VisionNode(Node):
 
     def __img_detection(self, msg: CompressedImage, model: YOLOv8) -> DetectionArray:
         try:
+            self.get_logger().info("start")
             self.actualise_deep()
-            detections = model.detect(cv2.imdecode(np.frombuffer(msg.data, np.uint8), cv2.IMREAD_COLOR), msg.header.frame_id)
+            detections = model.detect(self.br.imgmsg_to_cv2(msg), msg.header.frame_id)
+            self.get_logger().info("why")
             if(self.camera_front):
                 #get the depth for each element see by the front camera
                 for detect in detections.detected_object:
                     detect.distance = self.get_deep_istogram(int(detect.top_left_x), int(detect.bottom_right_x), int(detect.top_left_y) ,int(detect.bottom_right_y))
-                    angle_alpha,angle_teta,distance_teta = self.get_angle(int(detect.top_left_x), int(detect.bottom_right_x), int(detect.top_left_y) ,int(detect.bottom_right_y))
-                    detect.angle_alpha = angle_alpha
-                    detect.angle_teta = angle_teta
-                    detect.distance_teta = distance_teta
-                    self.get_logger().info("angle_alpha"+ str(angle_alpha))
+                    self.get_logger().info("class "+ str(detect.class_name))
+                    if(detect.class_name == "bin-inner"):
+                        angle_alpha,ditance_beta,angle_teta,distance_teta = self.get_angle(int(detect.top_left_x), int(detect.bottom_right_x), int(detect.top_left_y) ,int(detect.bottom_right_y))
+                        detect.angle_alpha = angle_alpha
+                        detect.angle_teta = angle_teta
+                        detect.distance_teta = distance_teta
+                        self.get_logger().info("angle_alpha "+ str(angle_alpha))
+                        self.get_logger().info("ditance_beta "+ str(ditance_beta))
+                        self.get_logger().info("angle_teta "+ str(angle_teta))
+                        self.get_logger().info("distance_teta "+ str(distance_teta))
+            self.get_logger().info("end")
             return detections
         except Exception as e:
             self.get_logger().info(f"Vision node failure :{e}")
@@ -162,25 +178,26 @@ class VisionNode(Node):
         if(self.__actual is None):
             self.actualise_deep()
             if (self.__actual is None):
-                return float(0),float(0),float(0)
+                return float(0),float(0),float(0),float(0)
             
         x10 = (x1+x2)//20
 
         # part to get all pixel in bouding box
-        area_seeLeft = self.__actual[min(max(0,x1),1280):min(max(0,x1),1280) + x10, min(max(0,y1),720):min(max(0,y2),720)]
-        area_seeMid = self.__actual[(min(max(0,x1),1280)+min(max(0,x2),1280))//2 - (x10//2) :(min(max(0,x1),1280)+min(max(0,x2),1280))//2 + (x10//2), min(max(0,y1),720):min(max(0,y2),720)]
-        # area_seeRigth = self.__actual[min(max(0,x2),1280) - x10 :min(max(0,x2),1280), min(max(0,y1),720):min(max(0,y2),720)]
+        area_seeLeft = self.__actual[min(max(0,x1),IMAGE_WIDTH) + x10 :min(max(0,x1),IMAGE_WIDTH) + x10*2, min(max(0,y1),IMAGE_HEIGTH):min(max(0,y2),IMAGE_HEIGTH)]
+        area_seeMid = self.__actual[(min(max(0,x1),IMAGE_WIDTH)+min(max(0,x2),IMAGE_WIDTH))//2 - (x10//2) :(min(max(0,x1),IMAGE_WIDTH)+min(max(0,x2),IMAGE_WIDTH))//2 + (x10//2), min(max(0,y1),IMAGE_HEIGTH):min(max(0,y2),IMAGE_HEIGTH)]
 
         # part to generate the histogram to get the most probable value for the depth
-        distanceX1 = np.histogram(area_seeMid,range = (0,5000),bins=500)[0].argmax()
-        distanceX2 = np.histogram(area_seeLeft,range = (0,5000),bins=500)[0].argmax()
-        # distanceX3 = np.histogram(area_seeRigth,range = (0,5000),bins=500)[0].argmax()
+        distanceX1 = np.histogram(area_seeMid,range = (0,15000),bins=1500)[0].argmax()
+        distanceX2 = np.histogram(area_seeLeft,range = (0,15000),bins=1500)[0].argmax()
 
         centreX = (x1 + x2) // 2
+        centreY = (y1 + y2) // 2
 
-        angleX = (640 - centreX)*41/1280
+        angleX = (IMAGE_WIDTH/2 - centreX)*ZED_HFOV/IMAGE_WIDTH
 
-        angle2 = (640 - x1)*41/1280
+        angleY = (IMAGE_HEIGTH/2 - centreY)*ZED_VFOV/IMAGE_HEIGTH
+
+        angle2 = (IMAGE_WIDTH/2 - x1)*ZED_HFOV/IMAGE_WIDTH
 
         pointx1 = math.cos(angleX) * distanceX1
         pointy1 = math.sin(angleX) * distanceX1
@@ -188,22 +205,22 @@ class VisionNode(Node):
         pointx2 = math.cos(angle2) * distanceX2
         pointy2 = math.sin(angle2) * distanceX2
 
-        hypo = math.sqrt(math.pow(pointx1-pointx2,2)+math.pow(pointy1-pointy2,2))
-        adja = math.sqrt(math.pow(pointx1-pointx2,2))
+        pointSubY = math.sin(angleY) * distanceX1
+
+        hypo = math.sqrt(pointx2*pointx2+distanceX1*distanceX1)
 
         if hypo == 0:
-            return float(angleX),float(0),float(0)
+            self.get_logger().info("issue hypo "+ str(hypo))
+            return float(angleX),float(angleY),float(0),float(0)
         if pointy1 < pointy2:
-            angleTeta = 90 - math.acos(adja/hypo)
+            angleTeta = 90 - math.acos(distanceX1/hypo)
         else:
-            angleTeta = -90 + math.acos(adja/hypo)
+            angleTeta = -90 + math.acos(distanceX1/hypo)
 
-        math.cos(angleTeta)
-        math.sin(angleTeta)
-        
+        #y par la matrice de rotation en 2D
         newY = math.sin(angleTeta) * pointx1 + math.cos(angleTeta) * pointy1
 
-        return float(angleX), float(angleTeta), float(newY)
+        return float(angleX),float(pointSubY/UNIT), float(angleTeta), float(newY/UNIT)
         
     def get_deep_istogram(self, x1: int,x2: int,y1: int,y2: int) -> int:
         """function to return the distance of a object on a image
@@ -223,9 +240,9 @@ class VisionNode(Node):
                 return float(60)
 
         # part to get all pixel in bouding box
-        area_see = self.__actual[min(max(0,x1),1280):min(max(0,x2),1280), min(max(0,y1),720):min(max(0,y2),720)]
+        area_see = self.__actual[min(max(0,x1),IMAGE_WIDTH):min(max(0,x2),IMAGE_WIDTH), min(max(0,y1),IMAGE_HEIGTH):min(max(0,y2),IMAGE_HEIGTH)]
 
         # part to generate the histogram to get the most probable value for the depth
         histo = np.histogram(area_see,range = (0,65535),bins=6553)[0]
 
-        return float(histo.argmax()/1000)
+        return float(histo.argmax()/UNIT)

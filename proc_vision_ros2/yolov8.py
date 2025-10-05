@@ -152,13 +152,15 @@ class YOLOv8:
         self.img_height, self.img_width = self.input_image.shape[:2]
 
         # Convert the image color space from BGR to RGB
+        # Needed by Yolo to working
         img = cv2.cvtColor(self.input_image, cv2.COLOR_BGR2RGB)
 
-        img = self.preprocess_image(img)
+        img = self.preprocess_image(self.input_image)
 
         img, pad = self.letterbox(img, (self.input_width, self.input_height))
 
         # Normalize the image data by dividing it by 255.0
+        # Needed by Yolo to working
         image_data = np.array(img) / 255.0
 
         # Transpose the image to have the channel dimension as the first dimension
@@ -223,8 +225,7 @@ class YOLOv8:
 
         detections = DetectionArray()
         detections.detected_object = []
-        if len(indices) < 1:
-            return detections
+        
         # Iterate over the selected indices after non-maximum suppression
         for i_array in indices:
             i = i_array[0]

@@ -118,10 +118,8 @@ class VisionNode(Node):
 
     def __img_detection(self, msg: CompressedImage, model: YOLOv8) -> DetectionArray:
         try:
-            self.get_logger().info("start")
             self.actualise_deep()
             detections = model.detect(self.br.imgmsg_to_cv2(msg), msg.header.frame_id)
-            self.get_logger().info("End")
             if(self.camera_front):
                 #get the depth for each element see by the front camera
                 for detect in detections.detected_object:
@@ -132,7 +130,6 @@ class VisionNode(Node):
                         detect.distance_beta = ditance_beta
                         detect.angle_teta = angle_teta
                         detect.distance_teta = distance_teta
-            self.get_logger().info("fail")
             return detections
         except Exception as e:
             self.get_logger().info(f"Vision node failure :{e}")

@@ -124,7 +124,7 @@ class VisionNode(Node):
                 #get the depth for each element see by the front camera
                 for detect in detections.detected_object:
                     detect.distance = self.get_deep_istogram(int(detect.top_left_x), int(detect.bottom_right_x), int(detect.top_left_y) ,int(detect.bottom_right_y))
-                    if(detect.class_name == "bin-inner"):
+                    if(detect.class_name == "torpedo-poster"):
                         angle_alpha,ditance_beta,angle_teta,distance_teta = self.get_angle(int(detect.top_left_x), int(detect.bottom_right_x), int(detect.top_left_y) ,int(detect.bottom_right_y))
                         detect.angle_alpha = angle_alpha
                         detect.distance_beta = ditance_beta

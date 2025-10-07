@@ -200,15 +200,15 @@ class VisionNode(Node):
 
         pointSubY = math.sin(angleY) * distanceX1
 
-        hypo = math.sqrt(pointx2*pointx2+distanceX1*distanceX1)
+        hypo = math.sqrt((pointx2-pointx1)*(pointx2-pointx1)+(pointy2-pointy1)*(pointy2-pointy1))
 
         if hypo == 0:
             self.get_logger().info("issue hypo "+ str(hypo))
             return float(angleX),float(angleY),float(0),float(0)
         if pointy1 < pointy2:
-            angleTeta = 90 - math.acos(distanceX1/hypo)
+            angleTeta = - math.asin(math.abs(pointx2)/hypo)
         else:
-            angleTeta = -90 + math.acos(distanceX1/hypo)
+            angleTeta = math.asin(math.abs(pointx2)/hypo)
 
         #y par la matrice de rotation en 2D
         newY = math.sin(angleTeta) * pointx1 + math.cos(angleTeta) * pointy1

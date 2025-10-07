@@ -48,8 +48,8 @@ class VisionNode(Node):
         self.__front_cam_sub = self.create_subscription(Image, "zed/zed_node/left/image_rect_color", self.__img_front_callback, 10)
         self.__front_cam_sim = self.create_subscription(Image, "proc_simulation/front", self.__img_front_callback, 10)
         
-        self.__bottom_cam_sub = self.create_subscription(CompressedImage, "camera_array/bottom/image_raw/compressed", self.__img_bottom_callback, qos)
-        self.__bottom_cam_sim = self.create_subscription(CompressedImage, "proc_simulation/bottom/compressed", self.__img_bottom_callback, 10)
+        self.__bottom_cam_sub = self.create_subscription(Image, "camera_array/bottom/image_raw", self.__img_bottom_callback, qos)
+        self.__bottom_cam_sim = self.create_subscription(Image, "proc_simulation/bottom", self.__img_bottom_callback, 10)
 
         model_front_name = self.get_parameter("models").get_parameter_value().string_array_value[0]
         model_bottom_name = self.get_parameter("models").get_parameter_value().string_array_value[0]
@@ -121,19 +121,19 @@ class VisionNode(Node):
             self.get_logger().info("start")
             self.actualise_deep()
             detections = model.detect(self.br.imgmsg_to_cv2(msg), msg.header.frame_id)
-            self.get_logger().info("why")
+            self.get_logger().info("End")
             if(self.camera_front):
                 #get the depth for each element see by the front camera
                 for detect in detections.detected_object:
                     detect.distance = self.get_deep_istogram(int(detect.top_left_x), int(detect.bottom_right_x), int(detect.top_left_y) ,int(detect.bottom_right_y))
-                    self.get_logger().info("class "+ str(detect.class_name))
                     if(detect.class_name == "bin-inner"):
                         angle_alpha,ditance_beta,angle_teta,distance_teta = self.get_angle(int(detect.top_left_x), int(detect.bottom_right_x), int(detect.top_left_y) ,int(detect.bottom_right_y))
                         detect.angle_alpha = angle_alpha
                         detect.distance_beta = ditance_beta
                         detect.angle_teta = angle_teta
                         detect.distance_teta = distance_teta
-            self.get_logger().info("end")
+            self.get_logger().info("fail")
+            self.get_logger().info(str(len(detections.detected_object)))
             return detections
         except Exception as e:
             self.get_logger().info(f"Vision node failure :{e}")

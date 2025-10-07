@@ -3,6 +3,9 @@ import cv2
 import yaml
 import numpy as np
 import onnxruntime as ort
+import tensorrt as trt
+import pycuda.driver as cuda
+import pycuda.autoinit
 from sonia_common_ros2.msg import Detection, DetectionArray
 
 
@@ -46,7 +49,7 @@ class YOLOv8:
             onnx_model (str): Path to the ONNX model.
             confidence_thres (float): Confidence threshold for filtering detections.
         """
-        self.onnx_model = onnx_model+"/model.onnx"
+        self.engigne = onnx_model+"/testengigne2.trt"
         self.input_image = None
         self.draw = False
         self.confidence_thres = confidence_thres
@@ -59,17 +62,32 @@ class YOLOv8:
         # Generate a color palette for the classes
         self.color_palette = np.random.uniform(0, 255, size=(len(self.classes), 3))
 
-        # Create an inference session using the ONNX model and specify execution providers
-        self.session = ort.InferenceSession(self.onnx_model, providers=["CUDAExecutionProvider"])#, "CPUExecutionProvider"])
+        # Create an inference session using the Tensorrt model and specify execution providers
+        
+        self.logger = trt.Logger(trt.Logger.WARNING)
+        self.runtime = trt.Runtime(self.logger)
+        with open(self.engigne, "rb") as f:
+            model_data = f.read()
+        self.engine = self.runtime.deserialize_cuda_engine(model_data)
 
-        # Get the model inputs
-        model_inputs = self.session.get_inputs()
-        self.model_name = model_inputs[0].name
+        self.context = self.engine.create_execution_context()
+
+        for binding in self.engine:
+            if self.engine.binding_is_input(binding):  # we expect only one input
+                self.input_shape = self.engine.get_binding_shape(binding)
+                self.input_size = trt.volume(self.input_shape) * self.engine.max_batch_size * np.dtype(np.float32).itemsize  # in bytes
+                self.device_input = cuda.mem_alloc(self.input_size)
+            else:  # and one output
+                self.output_shape = self.engine.get_binding_shape(binding)
+                # create page-locked memory buffers (i.e. won't be swapped to disk)
+                self.host_output = cuda.pagelocked_empty(trt.volume(self.output_shape) * self.engine.max_batch_size, dtype=np.float32)
+                self.device_output = cuda.mem_alloc(self.host_output.nbytes)
+        
+        self.stream = cuda.Stream()
 
         # Store the shape of the input for later use
-        input_shape = model_inputs[0].shape
-        self.input_width = input_shape[2]
-        self.input_height = input_shape[3]
+        self.input_width = self.input_shape[2]
+        self.input_height = self.input_shape[3]
 
     def preprocess_image(self, img):
         ycrcb_img = cv2.cvtColor(np.array(img), cv2.COLOR_BGR2YCrCb)
@@ -155,7 +173,7 @@ class YOLOv8:
         # Needed by Yolo to working
         img = cv2.cvtColor(self.input_image, cv2.COLOR_BGR2RGB)
 
-        img = self.preprocess_image(self.input_image)
+        #img = self.preprocess_image(img)
 
         img, pad = self.letterbox(img, (self.input_width, self.input_height))
 
@@ -171,7 +189,7 @@ class YOLOv8:
 
         return image_data, pad
 
-    def postprocess(self, input_image: np.ndarray, output: List[np.ndarray], pad: Tuple[int, int]) -> DetectionArray:
+    def postprocess(self, input_image: np.ndarray, outputs: List[np.ndarray], pad: Tuple[int, int]) -> DetectionArray:
         """
         Perform post-processing on the model's output to extract and visualize detections.
 
@@ -186,9 +204,6 @@ class YOLOv8:
         Returns:
             (np.ndarray): The input image with detections drawn on it.
         """
-        # Transpose and squeeze the output to match the expected shape
-        outputs = np.transpose(np.squeeze(output[0]))
-
         # Lists to store the bounding boxes, scores, and class IDs of the detections
         boxes = []
         scores = []
@@ -196,8 +211,8 @@ class YOLOv8:
 
         # Calculate the scaling factors for the bounding box coordinates
         gain = min(self.input_height / self.img_height, self.input_width / self.img_width)
-        outputs[:, 0] -= pad[1]
-        outputs[:, 1] -= pad[0]
+        outputs[:,0] -= pad[1]
+        outputs[:,1] -= pad[0]
         
         # Iterate over each row in the outputs array
         size = outputs[0:outputs.shape[0], 4:]
@@ -225,7 +240,7 @@ class YOLOv8:
 
         detections = DetectionArray()
         detections.detected_object = []
-        
+
         # Iterate over the selected indices after non-maximum suppression
         for i_array in indices:
             i = i_array[0]
@@ -273,9 +288,16 @@ class YOLOv8:
         img_data, pad = self.preprocess()
 
         # Run inference using the preprocessed image data
-        outputs = self.session.run(None, {self.model_name: img_data})
+        self.host_input = np.array(img_data, dtype=np.float32, order='C')
+        cuda.memcpy_htod_async(self.device_input, self.host_input, self.stream)
+        self.stream.synchronize()
+
+        self.context.execute_async(bindings=[int(self.device_input), int(self.device_output)], stream_handle=self.stream.handle)
+        cuda.memcpy_dtoh_async(self.host_output, self.device_output, self.stream)
+        self.stream.synchronize()
+        
         # Perform post-processing on the outputs to obtain output image
-        return self.postprocess(self.input_image, outputs, pad)
+        return self.postprocess(self.input_image, np.array(self.host_output).reshape(22,7581).T, pad)
 
     def available_providers(self) -> List[str]:
         return ort.get_available_providers()

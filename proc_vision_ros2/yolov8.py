@@ -8,7 +8,6 @@ import pycuda.driver as cuda
 import pycuda.autoinit
 from sonia_common_ros2.msg import Detection, DetectionArray
 
-
 class YOLOv8:
     """
     YOLOv8 object detection model class for handling ONNX inference and visualization.

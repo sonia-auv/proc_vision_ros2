@@ -35,11 +35,6 @@ set(CUDA_INCLUDE_DIRS ${CUDA_TOOLKIT_ROOT_DIR}/${CUDA_INSTALL_TARGET_DIR}/includ
 
 set(TENSORRT_PATH "/usr/local/cuda/")
 
-set( SMS 30 32 35 37 50 52 53 60 61 62 70 72 75 80 86 87)
-foreach(sm ${SMS})
-	set(GENCODE ${GENCODE} -gencode arch=compute_${sm},code=sm_${sm})
-endforeach()
-
 set(CUDA_NVCC_FLAGS ${CUDA_NVCC_FLAGS}
     -ccbin ${CMAKE_CXX_COMPILER}
 )
@@ -92,8 +87,6 @@ set_target_properties(
     ${PROJECT_NAME} PROPERTIES
     CUDA_SEPARABLE_COMPILATION ON
 )
-
-set_target_properties(${PROJECT_NAME} PROPERTIES CUDA_ARCHITECTURES "80;86;87")
 
 if(BUILD_TESTING)
   find_package(ament_lint_auto REQUIRED)

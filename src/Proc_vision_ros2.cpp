@@ -1,6 +1,7 @@
 #include "proc_vision_ros2/Proc_vision_ros2.hpp"
 #include <algorithm>
 #include <cstdlib>
+#include <cuda_runtime.h>
 
 using std::placeholders::_1;
 
@@ -37,6 +38,34 @@ namespace proc_vision_ros2
         
         _subscriberZedDepth =
             this->create_subscription<sensor_msgs::msg::Image>("/zed/zed_node/depth/depth_registered", 10, std::bind(&Proc_vision_ros2::messageZedDepthCallBack, this, _1));
+        
+        int driverVersion;
+
+        // Get the CUDA driver version
+        cudaError_t error = cudaDriverGetVersion(&driverVersion);
+
+        if (error == cudaSuccess) {
+            // Extract major, minor, and patch versions
+            int major = driverVersion / 1000;
+            int minor = (driverVersion % 1000) / 10;
+            int patch = driverVersion % 10;
+
+            RCLCPP_INFO_STREAM(this->get_logger(),  "CUDA Driver Version: " << major << "." << minor << "." << patch);
+        } else {
+            RCLCPP_INFO_STREAM(this->get_logger(),  "CUDA Driver Version: " << cudaGetErrorString(error));
+        }
+
+        try
+        {
+            _cameraFront =true;
+            _modelFront = new Yolo(MODELDIR+"robosub-2025-v2",logger);
+        }
+        catch(const std::exception& e)
+        {
+            RCLCPP_INFO_STREAM(this->get_logger(),  "ERROR when infer on the iamge"<<e.what());
+        }
+        
+        RCLCPP_INFO(this->get_logger(),  "Started");
     }
 
     Proc_vision_ros2::~Proc_vision_ros2(){

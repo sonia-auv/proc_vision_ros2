@@ -3,7 +3,6 @@
 #include "proc_vision_ros2/cuda_utils.h"          // CUDA utility functions
 #include "proc_vision_ros2/macros.h"              // Common macros
 #include "proc_vision_ros2/preprocess.h"          // Preprocessing functions
-#include "preprocess.cu"          // Preprocessing functions
 #include <NvOnnxParser.h>        // NVIDIA ONNX parser for TensorRT
 #include <fstream>               // File stream operations
 #include <iostream>              // Input/output stream operations
@@ -17,7 +16,7 @@ namespace proc_vision_ros2
     #define isFP16 true
 
     // Define whether to perform model warmup
-    #define warmup true
+    #define warmup false
 
     Yolo::Yolo(){
         _initia=false;
@@ -27,6 +26,8 @@ namespace proc_vision_ros2
     Yolo::Yolo(string model_path, nvinfer1::ILogger& logger)
     {
         _initia=true;
+        model_path = model_path+"/model.engine";
+        
         // Check if the model path does not contain ".onnx"
         if (model_path.find(".onnx") == std::string::npos)
         {

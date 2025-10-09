@@ -110,7 +110,6 @@ namespace proc_vision_ros2
             float nms_threshold = 0.4f; //!< Non-Maximum Suppression (NMS) threshold for filtering overlapping boxes.
 
             string frameId;
-
             bool _initia;
 
     };

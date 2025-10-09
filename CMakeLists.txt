@@ -5,6 +5,7 @@ project(proc_vision_ros2 LANGUAGES CXX CUDA)
 if(CMAKE_COMPILER_IS_GNUCXX OR CMAKE_CXX_COMPILER_ID MATCHES "Clang")
   add_compile_options(-Wall -Wextra -Wpedantic)
 endif()
+
 # find dependencies
 find_package(ament_cmake REQUIRED)
 
@@ -23,31 +24,19 @@ find_package(CUDAToolkit REQUIRED)
 
 find_package(OpenCV REQUIRED)
 find_package(CUDA REQUIRED)
+
 if(NOT CUDA_FOUND)
     message(FATAL_ERROR "CUDA not found. Please install the CUDA Toolkit.")
 endif()
 
-set(CMAKE_C_COMPILER /usr/bin/gcc)
-set(CMAKE_CXX_COMPILER /usr/bin/g++)
-set(CUDA_INSTALL_TARGET_DIR targets/aarch64-linux)
-set(CUDA_TOOLKIT_ROOT_DIR /usr/local/cuda)
-set(CUDA_INCLUDE_DIRS ${CUDA_TOOLKIT_ROOT_DIR}/${CUDA_INSTALL_TARGET_DIR}/include)
-
 set(TENSORRT_PATH "/usr/local/cuda/")
-
-set(CUDA_NVCC_FLAGS ${CUDA_NVCC_FLAGS}
-    -ccbin ${CMAKE_CXX_COMPILER}
-)
         
 include_directories(include ${TENSORRT_PATH}/include
-  /usr/local/cuda/include)
+  /usr/local/cuda/targets/aarch64-linux/include)
 
-file(GLOB SOURCES src/*.cpp)
+file(GLOB SOURCES src/*.cu src/*.cpp )
 
-set_source_files_properties(src/preprocess.cu PROPERTIES LANGUAGE CUDA)
-
-cuda_add_executable(${PROJECT_NAME} ${SOURCES}
-  src/preprocess.cu)
+cuda_add_executable(${PROJECT_NAME} ${SOURCES})
 
 install(
   DIRECTORY include/
@@ -68,6 +57,8 @@ install(TARGETS
   DESTINATION lib/${PROJECT_NAME}
 )
 
+target_compile_definitions(${PROJECT_NAME} PRIVATE API_EXPORTS)
+
 ament_target_dependencies(${PROJECT_NAME} rclcpp sonia_common_cpp sonia_common_ros2 std_msgs std_srvs cv_bridge sensor_msgs image_transport OpenCV CUDA)
 
 set(TENSORRT_LIBS
@@ -80,13 +71,14 @@ set(TENSORRT_LIBS
 target_link_libraries(
     ${PROJECT_NAME}
     ${TENSORRT_LIBS}
-    CUDA::cudart
 )
 
 set_target_properties(
     ${PROJECT_NAME} PROPERTIES
     CUDA_SEPARABLE_COMPILATION ON
 )
+
+# set(CMAKE_CUDA_ARCHITECTURES "72")
 
 if(BUILD_TESTING)
   find_package(ament_lint_auto REQUIRED)

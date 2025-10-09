@@ -190,7 +190,7 @@ void cuda_preprocess(
     int blocks = ceil(jobs / (float)threads);
 
     // Launch the warp affine kernel
-    warpaffine_kernel << <blocks, threads, 0, stream >> > (
+    warpaffine_kernel <<< blocks, threads, 0, stream >>>(
         img_buffer_device,           // Source image on device
         src_width * 3,               // Source line size (bytes per row)
         src_width,                   // Source width

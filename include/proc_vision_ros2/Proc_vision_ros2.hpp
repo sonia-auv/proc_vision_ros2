@@ -1,6 +1,6 @@
 #pragma once
 #include "rclcpp/rclcpp.hpp"
-#include <sensor_msgs/msg/image.hpp>
+#include "sensor_msgs/msg/image.hpp"
 #include <cv_bridge/cv_bridge.h>
 #include <opencv2/opencv.hpp>
 #include <image_transport/image_transport.hpp>
@@ -34,19 +34,19 @@ namespace proc_vision_ros2
 
         // Function for the front camera
 
-        void messageFrontCameraCallBack(const sensor_msgs::msg::Image::SharedPtr &msg);
+        void messageFrontCameraCallBack(const sensor_msgs::msg::Image &msg);
 
         // Function for the bottom camera
 
-        void messageBottomCameraCallBack(const sensor_msgs::msg::Image::SharedPtr &msg);
+        void messageBottomCameraCallBack(const sensor_msgs::msg::Image &msg);
 
         // Function the IA
 
-        sonia_common_ros2::msg::DetectionArray imgDetection(const sensor_msgs::msg::Image::SharedPtr &msg, Yolo model);
+        sonia_common_ros2::msg::DetectionArray imgDetection(const sensor_msgs::msg::Image &msg, Yolo* model);
 
         // Function for the depth
 
-        void messageZedDepthCallBack(const sensor_msgs::msg::Image::SharedPtr &msg);
+        void messageZedDepthCallBack(const sensor_msgs::msg::Image &msg);
 
         void actualiseDepp();
 
@@ -62,7 +62,7 @@ namespace proc_vision_ros2
         rclcpp::Publisher<sonia_common_ros2::msg::DetectionArray>::SharedPtr _publisherDetectionArrayFront;
 
         rclcpp::Subscription<sensor_msgs::msg::Image>::SharedPtr _subscriberFrontCamera;
-        rclcpp::Subscription<sensor_msgs::msg::Image>::SharedPtr _subscriberBottomCameraSim;
+        rclcpp::Subscription<sensor_msgs::msg::Image>::SharedPtr _subscriberFrontCameraSim;
         rclcpp::Subscription<sensor_msgs::msg::Image>::SharedPtr _subscriberBottomCamera;
         rclcpp::Subscription<sensor_msgs::msg::Image>::SharedPtr _subscriberBottomCameraSim;
 
@@ -73,8 +73,8 @@ namespace proc_vision_ros2
         bool _cameraFront = false;
         bool _cameraBottom = false;
 
-        Yolo _modelFront;
-        Yolo _modelBottom;
+        Yolo* _modelFront;
+        Yolo* _modelBottom;
 
         cv_bridge::CvImagePtr _cvBridge;
         cv::Mat _actualDepth;

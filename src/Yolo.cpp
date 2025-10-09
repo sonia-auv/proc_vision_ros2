@@ -3,6 +3,7 @@
 #include "proc_vision_ros2/cuda_utils.h"          // CUDA utility functions
 #include "proc_vision_ros2/macros.h"              // Common macros
 #include "proc_vision_ros2/preprocess.h"          // Preprocessing functions
+#include "preprocess.cu"          // Preprocessing functions
 #include <NvOnnxParser.h>        // NVIDIA ONNX parser for TensorRT
 #include <fstream>               // File stream operations
 #include <iostream>              // Input/output stream operations
@@ -202,10 +203,19 @@ namespace proc_vision_ros2
         {
             sonia_common_ros2::msg::Detection result;
             int idx = nms_result[i];
-            result.class_id = class_ids[idx];
-            result.conf = confidences[idx];
-            result.bbox = boxes[idx];
-            output.push_back(result);
+            result.class_name = class_ids[idx];
+            result.confidence = confidences[idx];
+            result.top_left_x = boxes[idx].x;
+            result.top_left_y = boxes[idx].y;
+            result.top_right_x = boxes[idx].x;
+            result.top_right_y = boxes[idx].y + boxes[idx].height;
+            result.top_left_x = boxes[idx].x + boxes[idx].width;
+            result.top_left_y = boxes[idx].y;
+            result.bottom_right_x = boxes[idx].x + boxes[idx].width;
+            result.bottom_right_y = boxes[idx].y + boxes[idx].height;
+            result.frame_id = frameId;
+            
+            output.detected_object.push_back(result);
         }
     }
 
@@ -288,7 +298,7 @@ namespace proc_vision_ros2
     // Save the serialized TensorRT engine to a file
     void Yolo::detect(Mat& image,string frameID, sonia_common_ros2::msg::DetectionArray& output)
     {
-        self.frameId = frameID;
+        frameId = frameID;
 
         // Preprocess the frame
         preprocess(image);

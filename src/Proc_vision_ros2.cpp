@@ -41,10 +41,10 @@ namespace proc_vision_ros2
 
     Proc_vision_ros2::~Proc_vision_ros2(){
         if(_cameraFront){
-            _modelFront.~Yolo();
+            _modelFront->~Yolo();
         }
         if(_cameraBottom){
-            _modelBottom.~Yolo();
+            _modelBottom->~Yolo();
         }
     }
 
@@ -62,30 +62,14 @@ namespace proc_vision_ros2
         if(request.get()->camera_choice == request.get()->FRONT){
             _cameraBottom =false;
             _cameraFront =true;
-            if(_modelFront.getInit()){
-                _modelFront.~Yolo();
-                _modelFront = new Yolo();
-            }
             _modelFront = new Yolo(MODELDIR+model_name,logger);
         }else if(request.get()->camera_choice == request.get()->BOTTOM){
             _cameraBottom =true;
             _cameraFront =false;
-            if(_modelBottom.getInit()){
-                _modelBottom.~Yolo();
-                _modelBottom = new Yolo();
-            }
             _modelBottom = new Yolo(MODELDIR+model_name,logger);
         }else if(request.get()->camera_choice == request.get()->BOTH) {
             _cameraBottom =true;
             _cameraFront =true;
-            if(_modelFront.getInit()){
-                _modelFront.~Yolo();
-                _modelFront = new Yolo();
-            }
-            if(_modelBottom.getInit()){
-                _modelBottom.~Yolo();
-                _modelBottom = new Yolo();
-            }
             _modelFront = new Yolo(MODELDIR+model_name,logger);
             _modelBottom = new Yolo(MODELDIR+model_name,logger);
         }else{
@@ -94,25 +78,25 @@ namespace proc_vision_ros2
         }
     }
 
-    void Proc_vision_ros2::messageFrontCameraCallBack(const sensor_msgs::msg::Image::SharedPtr &msg){
+    void Proc_vision_ros2::messageFrontCameraCallBack(const sensor_msgs::msg::Image &msg){
         if(_cameraFront){
             _publisherDetectionArrayFront->publish(imgDetection(msg,_modelFront));
         }
     }
 
-    void Proc_vision_ros2::messageBottomCameraCallBack(const sensor_msgs::msg::Image::SharedPtr &msg){
+    void Proc_vision_ros2::messageBottomCameraCallBack(const sensor_msgs::msg::Image &msg){
         if(_cameraBottom){
             _publisherDetectionArrayBottom->publish(imgDetection(msg,_modelBottom));
         }
     }
 
-    sonia_common_ros2::msg::DetectionArray Proc_vision_ros2::imgDetection(const sensor_msgs::msg::Image::SharedPtr &msg, Yolo model){
+    sonia_common_ros2::msg::DetectionArray Proc_vision_ros2::imgDetection(const sensor_msgs::msg::Image &msg, Yolo* model){
         try
         {
             actualiseDepp();
             detections.detected_object={};
             auto temp = cv_bridge::toCvCopy(msg);
-            model.detect(temp->image,temp->header.frame_id,detections);
+            model->detect(temp->image,temp->header.frame_id,detections);
             if(_cameraFront){
                 for(sonia_common_ros2::msg::Detection detection : detections.detected_object){
                     detection.distance = getDeepIstogram((int)detection.top_left_x,(int)detection.top_left_y,(int)detection.bottom_right_x,(int)detection.bottom_right_y);
@@ -134,7 +118,7 @@ namespace proc_vision_ros2
         
     }
 
-    void Proc_vision_ros2::messageZedDepthCallBack(const sensor_msgs::msg::Image::SharedPtr &msg){
+    void Proc_vision_ros2::messageZedDepthCallBack(const sensor_msgs::msg::Image &msg){
         try
         {
             _lastDepth = cv_bridge::toCvCopy(msg)->image;

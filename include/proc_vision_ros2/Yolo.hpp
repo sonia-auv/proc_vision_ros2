@@ -73,7 +73,7 @@ namespace proc_vision_ros2
              *
              * @param output A vector to store the detected objects.
              */
-            void postprocess(vector<Detection>& output);
+            void postprocess(sonia_common_ros2::msg::DetectionArray& output);
 
             /**
              * @brief Build the TensorRT engine from the ONNX model.

@@ -4,6 +4,7 @@
 #include <cuda_runtime.h>
 
 using std::placeholders::_1;
+using std::placeholders::_2;
 
 namespace proc_vision_ros2
 {
@@ -38,6 +39,9 @@ namespace proc_vision_ros2
         
         _subscriberZedDepth =
             this->create_subscription<sensor_msgs::msg::Image>("/zed/zed_node/depth/depth_registered", 10, std::bind(&Proc_vision_ros2::messageZedDepthCallBack, this, _1));
+
+        _aiActivationService = this->create_service<sonia_common_ros2::srv::AiActivationService>(
+            "/proc_vision/ai_activation", std::bind(&Proc_vision_ros2::processActuatorRequest, this, _1, _2));
         
         int driverVersion;
 
@@ -54,11 +58,13 @@ namespace proc_vision_ros2
         } else {
             RCLCPP_INFO_STREAM(this->get_logger(),  "CUDA Driver Version: " << cudaGetErrorString(error));
         }
+        
+        RCLCPP_INFO(this->get_logger(),  "Load");
 
         try
         {
-            _cameraFront =true;
-            _modelFront = new Yolo(MODELDIR+"robosub-2025-v2",logger);
+            _cameraFront = true;
+            _modelFront = new Yolo(MODELDIR+"yolo11l",logger);
         }
         catch(const std::exception& e)
         {
@@ -82,6 +88,7 @@ namespace proc_vision_ros2
         vector<string> model_list = this->get_parameter("models").get_value<vector<string>>();
         
         string model_name;
+
         if(request.get()->model_choice >=0 and request.get()->model_choice <= model_list.size()){
             model_name = model_list[request.get()->model_choice];
         }else{
@@ -122,10 +129,11 @@ namespace proc_vision_ros2
     sonia_common_ros2::msg::DetectionArray Proc_vision_ros2::imgDetection(const sensor_msgs::msg::Image &msg, Yolo* model){
         try
         {
+	        RCLCPP_INFO(this->get_logger(),  "start");
             actualiseDepp();
             detections.detected_object={};
             auto temp = cv_bridge::toCvCopy(msg);
-            model->detect(temp->image,temp->header.frame_id,detections);
+            RCLCPP_INFO_STREAM(this->get_logger(),  "Number detection "<<std::to_string(model->detect(temp->image,temp->header.frame_id,detections)));
             if(_cameraFront){
                 for(sonia_common_ros2::msg::Detection detection : detections.detected_object){
                     detection.distance = getDeepIstogram((int)detection.top_left_x,(int)detection.top_left_y,(int)detection.bottom_right_x,(int)detection.bottom_right_y);
@@ -137,6 +145,8 @@ namespace proc_vision_ros2
                     // detection.distance_teta = angle[3];
                 }
             }
+	        RCLCPP_INFO(this->get_logger(),  "end");
+            return detections;
         }
         catch(const std::exception& e)
         {
@@ -169,7 +179,7 @@ namespace proc_vision_ros2
         Mat subMatrice = _actualDepth(rows,cols);
         cv::Mat hist;
         int histSize[] = {6553};
-        float range[] = {0, 65535};
+        float range[] = {0, 65530};
         const float* ranges[] = {range};
         int channels[] = {0};
 

@@ -150,8 +150,9 @@ namespace proc_vision_ros2
     }
 
     // Postprocess the inference output to extract detections
-    void Yolo::postprocess(sonia_common_ros2::msg::DetectionArray& output)
+    int Yolo::postprocess(sonia_common_ros2::msg::DetectionArray& output)
     {
+        int nbDetec = 0;
         // Asynchronously copy output from GPU to CPU
         CUDA_CHECK(cudaMemcpyAsync(cpu_output_buffer, gpu_buffers[1], num_detections * detection_attribute_size * sizeof(float), cudaMemcpyDeviceToHost, stream));
         // Synchronize the CUDA stream to ensure copy is complete
@@ -202,6 +203,7 @@ namespace proc_vision_ros2
         // Iterate over NMS results and populate the output detections
         for (int i = 0; i < nms_result.size(); i++)
         {
+            ++nbDetec;
             sonia_common_ros2::msg::Detection result;
             int idx = nms_result[i];
             result.class_name = class_ids[idx];
@@ -218,6 +220,7 @@ namespace proc_vision_ros2
             
             output.detected_object.push_back(result);
         }
+        return nbDetec;
     }
 
     // Build the TensorRT engine from an ONNX model
@@ -297,7 +300,7 @@ namespace proc_vision_ros2
     }
 
     // Save the serialized TensorRT engine to a file
-    void Yolo::detect(Mat& image,string frameID, sonia_common_ros2::msg::DetectionArray& output)
+    int Yolo::detect(Mat& image,string frameID, sonia_common_ros2::msg::DetectionArray& output)
     {
         frameId = frameID;
 
@@ -308,6 +311,6 @@ namespace proc_vision_ros2
         infer();
 
         // Postprocess to get detections
-        postprocess(output);
+        return postprocess(output);
     }
 }

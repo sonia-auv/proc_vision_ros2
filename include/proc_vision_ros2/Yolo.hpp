@@ -37,7 +37,7 @@ namespace proc_vision_ros2
              * @brief launch the process to detect on a image
              *
              */
-            void detect(Mat& image,string frameID,sonia_common_ros2::msg::DetectionArray& output);
+            int detect(Mat& image,string frameID,sonia_common_ros2::msg::DetectionArray& output);
 
             bool getInit(){return _initia;}
 
@@ -73,7 +73,7 @@ namespace proc_vision_ros2
              *
              * @param output A vector to store the detected objects.
              */
-            void postprocess(sonia_common_ros2::msg::DetectionArray& output);
+            int postprocess(sonia_common_ros2::msg::DetectionArray& output);
 
             /**
              * @brief Build the TensorRT engine from the ONNX model.

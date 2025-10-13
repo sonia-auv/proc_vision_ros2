@@ -2,6 +2,8 @@
   ros__parameters:
 
     models: [
+      "yolo11l",
+      "yolo11m",
       "robosub-2025-v2",
       "robosub-2025-v1",
       "robosub-2025-v0",

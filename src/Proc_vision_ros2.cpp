@@ -2,6 +2,7 @@
 #include <algorithm>
 #include <cstdlib>
 #include <cuda_runtime.h>
+#include <cmath>
 
 using std::placeholders::_1;
 using std::placeholders::_2;
@@ -32,10 +33,10 @@ namespace proc_vision_ros2
 
 
         _publisherDetectionArrayFront =
-            this->create_publisher<sonia_common_ros2::msg::DetectionArray>("/proc_vision/bottom/classif", 10);
+            this->create_publisher<sonia_common_ros2::msg::DetectionArray>("/proc_vision/front/classif", 10);
 
         _publisherDetectionArrayBottom =
-            this->create_publisher<sonia_common_ros2::msg::DetectionArray>("/proc_vision/front/classif", 10);
+            this->create_publisher<sonia_common_ros2::msg::DetectionArray>("/proc_vision/bottom/classif", 10);
         
         _subscriberZedDepth =
             this->create_subscription<sensor_msgs::msg::Image>("/zed/zed_node/depth/depth_registered", 10, std::bind(&Proc_vision_ros2::messageZedDepthCallBack, this, _1));
@@ -63,7 +64,6 @@ namespace proc_vision_ros2
 
         try
         {
-            _cameraFront = true;
             _modelFront = new Yolo(MODELDIR+"yolo11l",logger);
         }
         catch(const std::exception& e)
@@ -134,15 +134,15 @@ namespace proc_vision_ros2
             detections.detected_object={};
             auto temp = cv_bridge::toCvCopy(msg);
             RCLCPP_INFO_STREAM(this->get_logger(),  "Number detection "<<std::to_string(model->detect(temp->image,temp->header.frame_id,detections)));
+            vector<float> angle = {0.0,0.0,0.0,0.0};
             if(_cameraFront){
                 for(sonia_common_ros2::msg::Detection detection : detections.detected_object){
                     detection.distance = getDeepIstogram((int)detection.top_left_x,(int)detection.top_left_y,(int)detection.bottom_right_x,(int)detection.bottom_right_y);
-                    // vector<float> angle = {0.0f,0.0f,0.0f,0.0f};
-                    // getAngle((int)detection.top_left_x,(int)detection.top_left_y,(int)detection.bottom_right_x,(int)detection.bottom_right_y, angle);
-                    // detection.angle_alpha = angle[0];
-                    // //detection.ditance_beta = angle[1];
-                    // detection.angle_teta = angle[2];
-                    // detection.distance_teta = angle[3];
+                    getAngle((int)detection.top_left_x,(int)detection.top_left_y,(int)detection.bottom_right_x,(int)detection.bottom_right_y, angle);
+                    detection.angle_alpha = angle[0];
+                    detection.distance_beta = angle[1];
+                    detection.angle_teta = angle[2];
+                    detection.distance_teta = angle[3];
                 }
             }
 	        RCLCPP_INFO(this->get_logger(),  "end");
@@ -193,5 +193,64 @@ namespace proc_vision_ros2
     }
 
     void Proc_vision_ros2::getAngle(int x1, int y1, int x2, int y2, vector<float> angle){
+        int x10 = (x2-x1)/10;
+        cv::Range rowsLeft(min(max(0,x1),IMAGEWIDTH)+ x10, min(max(0,x2),IMAGEWIDTH)+ x10*2);
+        cv::Range colsLeft(min(max(0,y1),IMAGEHEIGTH), min(max(0,y2),IMAGEHEIGTH));
+        cv::Range rowsMid((min(max(0,x1),IMAGEWIDTH) + min(max(0,x2),IMAGEWIDTH))/2 - x10/2, (min(max(0,x2),IMAGEWIDTH)+ min(max(0,x2),IMAGEWIDTH))/2 + x10/2);
+        cv::Range colsMid(min(max(0,y1),IMAGEHEIGTH), min(max(0,y2),IMAGEHEIGTH));
+
+        Mat subMatriceLeft = _actualDepth(rowsLeft,colsLeft);
+        Mat subMatriceMid = _actualDepth(rowsMid,colsMid);
+        cv::Mat histLeft;
+        cv::Mat histMid;
+        int histSize[] = {2500};
+        float range[] = {0, 25000};
+        const float* ranges[] = {range};
+        int channels[] = {0};
+
+        cv::calcHist(&subMatriceLeft, 1, channels, cv::Mat(), histLeft, 1, histSize, ranges, true, false);
+        cv::calcHist(&subMatriceLeft, 1, channels, cv::Mat(), histMid, 1, histSize, ranges, true, false);
+
+        double minValLeft, distanceLeft, distanceMid;
+        cv::Point minLocLeft, maxLocleft;
+
+        cv::minMaxLoc(histLeft, &minValLeft, &distanceLeft, &minLocLeft, &maxLocleft);
+        cv::minMaxLoc(histMid, &minValLeft, &distanceMid, &minLocLeft, &maxLocleft);
+
+        int centreX = (x1+x2)/2;
+        int centreY = (y1+y2)/2;
+
+        double angleX = (IMAGEWIDTH/2 -centreX)*ZEDHFOV/IMAGEWIDTH;
+        double angleY = (IMAGEHEIGTH/2 -centreY)*ZEDVFOV/IMAGEHEIGTH;
+        double angle2 = (IMAGEWIDTH/2 -x1+x10)*ZEDHFOV/IMAGEWIDTH;
+
+        double pointXMid = cos(angleX) * distanceMid;
+        double pointYMid = sin(angleX) * distanceMid;
+
+        double pointXLeft = cos(angle2) * distanceMid;
+        double pointYLeft = sin(angle2) * distanceMid;
+
+        double pointSubY = cos(angleY) * distanceMid;
+
+        double hypo = sqrt((pointXLeft-pointXMid)*(pointXLeft-pointXMid)+(pointYLeft-pointYMid)*(pointYLeft-pointYMid));
+
+        if(hypo < 0.01){
+            angle[0] = angleX;
+            angle[1] = pointSubY/_UNIT;
+            angle[2] = 0.0;
+            angle[3] = 0.0;
+        }else{
+            double angleTeta;
+            if(pointYMid<pointYLeft){
+                angleTeta = - asin(abs(pointXLeft)/hypo);
+            }else{
+                angleTeta = asin(abs(pointXLeft)/hypo);
+            }
+            double newDistanceY = sin(angleTeta)*pointXMid+ cos(angleTeta)*pointYMid;
+            angle[0] = angleX;
+            angle[1] = pointSubY/_UNIT;
+            angle[2] = angleTeta;
+            angle[3] = newDistanceY/_UNIT;
+        }
     }
 }

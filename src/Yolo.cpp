@@ -26,34 +26,37 @@ namespace proc_vision_ros2
     Yolo::Yolo(string model_path, nvinfer1::ILogger& logger)
     {
         _initia=true;
-        model_path = model_path+"/model.engine";
+
+        string model_path_enggine = model_path+"/model.engine";
         
         // Check if the model path does not contain ".onnx"
         if (model_path.find(".onnx") == std::string::npos)
         {
             // Initialize the engine from a serialized engine file
-            init(model_path, logger);
+            init(model_path_enggine, logger);
         }
         else
         {
             // Build the engine from an ONNX model
-            build(model_path, logger);
+            build(model_path_enggine, logger);
             // Save the built engine to a file
-            saveEngine(model_path);
+            saveEngine(model_path_enggine);
         }
 
+        _config = YAML::LoadFile(model_path+"/data.yaml")["names"];
+
         // Handle input dimensions based on TensorRT version
-    #if NV_TENSORRT_MAJOR < 10
-        // For TensorRT versions less than 10, get binding dimensions directly
-        auto input_dims = engine->getBindingDimensions(0);
-        input_h = input_dims.d[2];
-        input_w = input_dims.d[3];
-    #else
-        // For TensorRT versions 10 and above, use getTensorShape
-        auto input_dims = engine->getTensorShape(engine->getIOTensorName(0));
-        input_h = input_dims.d[2];
-        input_w = input_dims.d[3];
-    #endif
+        #if NV_TENSORRT_MAJOR < 10
+            // For TensorRT versions less than 10, get binding dimensions directly
+            auto input_dims = engine->getBindingDimensions(0);
+            input_h = input_dims.d[2];
+            input_w = input_dims.d[3];
+        #else
+            // For TensorRT versions 10 and above, use getTensorShape
+            auto input_dims = engine->getTensorShape(engine->getIOTensorName(0));
+            input_h = input_dims.d[2];
+            input_w = input_dims.d[3];
+        #endif
     }
 
     // Initialize the engine from a serialized engine file
@@ -206,7 +209,7 @@ namespace proc_vision_ros2
             ++nbDetec;
             sonia_common_ros2::msg::Detection result;
             int idx = nms_result[i];
-            result.class_name = class_ids[idx];
+            result.class_name = _config[class_ids[idx]].as<std::string>();//; 
             result.confidence = confidences[idx];
             result.top_left_x = boxes[idx].x;
             result.top_left_y = boxes[idx].y;

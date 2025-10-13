@@ -86,31 +86,37 @@ namespace proc_vision_ros2
     void Proc_vision_ros2::processActuatorRequest(const std::shared_ptr<sonia_common_ros2::srv::AiActivationService::Request> request,
                                    std::shared_ptr<sonia_common_ros2::srv::AiActivationService::Response> response){
         vector<string> model_list = this->get_parameter("models").get_value<vector<string>>();
-        
-        string model_name;
 
-        if(request.get()->model_choice >=0 and request.get()->model_choice <= model_list.size()){
-            model_name = model_list[request.get()->model_choice];
-        }else{
-            model_name = model_list[0];
+        try
+        {
+            string model_name;
+            if(request.get()->model_choice >=0 and request.get()->model_choice <= model_list.size()){
+                model_name = model_list[request.get()->model_choice];
+            }else{
+                model_name = model_list[0];
+            }
+
+            if(request.get()->camera_choice == request.get()->FRONT){
+                _cameraBottom =false;
+                _cameraFront =true;
+                _modelFront = new Yolo(MODELDIR+model_name,logger);
+            }else if(request.get()->camera_choice == request.get()->BOTTOM){
+                _cameraBottom =true;
+                _cameraFront =false;
+                _modelBottom = new Yolo(MODELDIR+model_name,logger);
+            }else if(request.get()->camera_choice == request.get()->BOTH) {
+                _cameraBottom =true;
+                _cameraFront =true;
+                _modelFront = new Yolo(MODELDIR+model_name,logger);
+                _modelBottom = new Yolo(MODELDIR+model_name,logger);
+            }else{
+                _cameraBottom = false;
+                _cameraFront = false;
+            }
         }
-
-        if(request.get()->camera_choice == request.get()->FRONT){
-            _cameraBottom =false;
-            _cameraFront =true;
-            _modelFront = new Yolo(MODELDIR+model_name,logger);
-        }else if(request.get()->camera_choice == request.get()->BOTTOM){
-            _cameraBottom =true;
-            _cameraFront =false;
-            _modelBottom = new Yolo(MODELDIR+model_name,logger);
-        }else if(request.get()->camera_choice == request.get()->BOTH) {
-            _cameraBottom =true;
-            _cameraFront =true;
-            _modelFront = new Yolo(MODELDIR+model_name,logger);
-            _modelBottom = new Yolo(MODELDIR+model_name,logger);
-        }else{
-            _cameraBottom = false;
-            _cameraFront = false;
+        catch(const std::exception& e)
+        {
+            RCLCPP_INFO_STREAM(this->get_logger(),  "ERROR when infer on the iamge " << e.what());
         }
     }
 
@@ -150,7 +156,7 @@ namespace proc_vision_ros2
         }
         catch(const std::exception& e)
         {
-            RCLCPP_INFO(this->get_logger(),  "ERROR when infer on the iamge");
+            RCLCPP_INFO_STREAM(this->get_logger(),  "ERROR when infer on the iamge " << e.what());
             detections.detected_object = {};
             return detections;
         }

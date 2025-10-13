@@ -13,6 +13,7 @@
   <depend>sonia_common_ros2</depend>
   <depend>CUDA</depend>
   <depend>OpenCV</depend>
+  <depend>yaml-cpp</depend>
 
   <test_depend>test_ImpactSubsea</test_depend>
 

@@ -1,6 +1,7 @@
 #pragma once
 #include "sonia_common_ros2/msg/detection_array.hpp"
 #include "sonia_common_ros2/msg/detection.hpp"
+#include <yaml-cpp/yaml.h>
 
 #include "NvInfer.h"
 #include <opencv2/opencv.hpp>
@@ -112,5 +113,6 @@ namespace proc_vision_ros2
             string frameId;
             bool _initia;
 
+            YAML::Node _config;
     };
 }

@@ -21,6 +21,7 @@ find_package(sensor_msgs REQUIRED)
 find_package(cv_bridge REQUIRED)
 find_package(image_transport REQUIRED)
 find_package(CUDAToolkit REQUIRED)
+find_package(yaml-cpp REQUIRED)
 
 find_package(OpenCV REQUIRED)
 find_package(CUDA REQUIRED)
@@ -59,7 +60,7 @@ install(TARGETS
 
 target_compile_definitions(${PROJECT_NAME} PRIVATE API_EXPORTS)
 
-ament_target_dependencies(${PROJECT_NAME} rclcpp sonia_common_cpp sonia_common_ros2 std_msgs std_srvs cv_bridge sensor_msgs image_transport OpenCV CUDA)
+ament_target_dependencies(${PROJECT_NAME} rclcpp sonia_common_cpp sonia_common_ros2 std_msgs std_srvs cv_bridge sensor_msgs image_transport OpenCV CUDA yaml-cpp)
 
 set(TENSORRT_LIBS
         "/usr/lib/aarch64-linux-gnu/libnvinfer.so"
@@ -71,6 +72,7 @@ set(TENSORRT_LIBS
 target_link_libraries(
     ${PROJECT_NAME}
     ${TENSORRT_LIBS}
+    yaml-cpp
 )
 
 set_target_properties(

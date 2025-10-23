@@ -29,7 +29,7 @@ ZED_HFOV = 82/2
 IMAGE_WIDTH = 1280
 IMAGE_HEIGTH = 720
 
-#Multiplicateur to be in meter
+#Multiplier to be in meter
 UNIT=100
 
 class VisionNode(Node):
@@ -58,7 +58,7 @@ class VisionNode(Node):
         self.__classif_front_pub = self.create_publisher(DetectionArray, "proc_vision/front/classif", 10)
         self.__classif_bottom_pub = self.create_publisher(DetectionArray, "proc_vision/bottom/classif", 10)
 
-        #Deep
+        #Depth
         self.__zed_depth = self.create_subscription(Image, "zed/zed_node/depth/depth_registered", self.__get_depth, 10)
         self.__actual = None
         self.__deep_last = None
@@ -175,7 +175,7 @@ class VisionNode(Node):
             
         x10 = (x1+x2)//20
 
-        # part to get all pixel in bouding box
+        # part to get all pixels in bounding box
         area_seeLeft = self.__actual[min(max(0,x1),IMAGE_WIDTH) + x10 :min(max(0,x1),IMAGE_WIDTH) + x10*2, min(max(0,y1),IMAGE_HEIGTH):min(max(0,y2),IMAGE_HEIGTH)]
         area_seeMid = self.__actual[(min(max(0,x1),IMAGE_WIDTH)+min(max(0,x2),IMAGE_WIDTH))//2 - (x10//2) :(min(max(0,x1),IMAGE_WIDTH)+min(max(0,x2),IMAGE_WIDTH))//2 + (x10//2), min(max(0,y1),IMAGE_HEIGTH):min(max(0,y2),IMAGE_HEIGTH)]
 
@@ -210,7 +210,7 @@ class VisionNode(Node):
         else:
             angleTeta = math.asin(math.abs(pointx2)/hypo)
 
-        #y par la matrice de rotation en 2D
+        # y by rotation matrix 2D
         newY = math.sin(angleTeta) * pointx1 + math.cos(angleTeta) * pointy1
 
         return float(angleX),float(pointSubY/UNIT), float(angleTeta), float(newY/UNIT)
@@ -232,7 +232,7 @@ class VisionNode(Node):
             if (self.__actual is None):
                 return float(60)
 
-        # part to get all pixel in bouding box
+        # part to get all pixels in bouding box
         area_see = self.__actual[min(max(0,x1),IMAGE_WIDTH):min(max(0,x2),IMAGE_WIDTH), min(max(0,y1),IMAGE_HEIGTH):min(max(0,y2),IMAGE_HEIGTH)]
 
         # part to generate the histogram to get the most probable value for the depth

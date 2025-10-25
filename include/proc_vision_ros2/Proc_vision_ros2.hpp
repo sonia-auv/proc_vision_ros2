@@ -34,24 +34,68 @@ namespace proc_vision_ros2
 
         // Function for the front camera
 
+        /**
+         * @brief Callback for message for the front camera
+         * 
+         * @param msg message to read
+         */
         void messageFrontCameraCallBack(const sensor_msgs::msg::Image &msg);
 
         // Function for the bottom camera
 
+        /**
+         * @brief Callback for message for the bottom camera
+         * 
+         * @param msg message to read
+         */
         void messageBottomCameraCallBack(const sensor_msgs::msg::Image &msg);
 
         // Function the IA
 
+        /**
+         * @brief function to detect image
+         * 
+         * @param msg message to read
+         * @param model model of yolo to use
+         * @return sonia_common_ros2::msg::DetectionArray 
+         */
         sonia_common_ros2::msg::DetectionArray imgDetection(const sensor_msgs::msg::Image &msg, Yolo* model);
 
         // Function for the depth
 
+        /**
+         * @brief Callback for message for the depth map
+         * 
+         * @param msg The depth Image in GreyScale
+         */
         void messageZedDepthCallBack(const sensor_msgs::msg::Image &msg);
 
-        void actualiseDepp();
+        /**
+         * @brief Define the last depth read to the depth to use
+         * 
+         */
+        void actualiseDepth();
 
+        /**
+         * @brief Get the Deep Istogram object from the last depth map actualise
+         * 
+         * @param x1 coordinate in x for the top left point
+         * @param y1 coordinate in y for the top left point
+         * @param x2 coordinate in x for the bottom right point
+         * @param y2 coordinate in y for the bottom right point
+         * @return float the distance
+         */
         float getDeepIstogram(int x1, int y1, int x2, int y2);
 
+        /**
+         * @brief Get the Angle object to alignement with it
+         * 
+         * @param x1 coordinate in x for the top left point
+         * @param y1 coordinate in y for the top left point
+         * @param x2 coordinate in x for the bottom right point
+         * @param y2 coordinate in y for the bottom right point
+         * @param angle the variable to return result
+         */
         void getAngle(int x1, int y1, int x2, int y2, vector<float> angle);
 
         // all variable to work

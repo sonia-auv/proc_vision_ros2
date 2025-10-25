@@ -136,7 +136,7 @@ namespace proc_vision_ros2
         try
         {
 	        RCLCPP_INFO(this->get_logger(),  "start");
-            actualiseDepp();
+            actualiseDepth();
             detections.detected_object={};
             auto temp = cv_bridge::toCvCopy(msg);
             RCLCPP_INFO_STREAM(this->get_logger(),  "Number detection "<<std::to_string(model->detect(temp->image,temp->header.frame_id,detections)));
@@ -175,7 +175,7 @@ namespace proc_vision_ros2
         
     }
 
-    void Proc_vision_ros2::actualiseDepp(){
+    void Proc_vision_ros2::actualiseDepth(){
         _actualDepth = _lastDepth;
     }
 

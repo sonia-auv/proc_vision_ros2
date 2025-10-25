@@ -4,8 +4,8 @@
 #include "proc_vision_ros2/macros.h"              // Common macros
 #include "proc_vision_ros2/preprocess.h"          // Preprocessing functions
 #include <NvOnnxParser.h>        // NVIDIA ONNX parser for TensorRT
-#include <fstream>               // File stream operations
-#include <iostream>              // Input/output stream operations
+#include <fstream>
+#include <iostream>
 
 namespace proc_vision_ros2
 {

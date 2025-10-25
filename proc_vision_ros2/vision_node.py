@@ -173,15 +173,15 @@ class VisionNode(Node):
             if (self.__actual is None):
                 return float(0),float(0),float(0),float(0)
             
-        x10 = (x1+x2)//20
+        x10 = (x2-x1)/10
 
         # part to get all pixels in bounding box
         area_seeLeft = self.__actual[min(max(0,x1),IMAGE_WIDTH) + x10 :min(max(0,x1),IMAGE_WIDTH) + x10*2, min(max(0,y1),IMAGE_HEIGTH):min(max(0,y2),IMAGE_HEIGTH)]
         area_seeMid = self.__actual[(min(max(0,x1),IMAGE_WIDTH)+min(max(0,x2),IMAGE_WIDTH))//2 - (x10//2) :(min(max(0,x1),IMAGE_WIDTH)+min(max(0,x2),IMAGE_WIDTH))//2 + (x10//2), min(max(0,y1),IMAGE_HEIGTH):min(max(0,y2),IMAGE_HEIGTH)]
 
         # part to generate the histogram to get the most probable value for the depth
-        distanceX1 = np.histogram(area_seeMid,range = (0,15000),bins=1500)[0].argmax()
-        distanceX2 = np.histogram(area_seeLeft,range = (0,15000),bins=1500)[0].argmax()
+        distanceX1 = np.histogram(area_seeMid,range = (0,25000),bins=2500)[0].argmax()
+        distanceX2 = np.histogram(area_seeLeft,range = (0,25000),bins=2500)[0].argmax()
 
         centreX = (x1 + x2) // 2
         centreY = (y1 + y2) // 2
@@ -204,7 +204,7 @@ class VisionNode(Node):
 
         if hypo == 0:
             self.get_logger().info("issue hypo "+ str(hypo))
-            return float(angleX),float(angleY),float(0),float(0)
+            return float(angleX),float(pointSubY/UNIT),float(0),float(0)
         if pointy1 < pointy2:
             angleTeta = - math.asin(math.abs(pointx2)/hypo)
         else:

@@ -108,7 +108,7 @@ class VisionNode(Node):
 
         return response
 
-    def __img_front_callback(self, msg: CompressedImage):
+    def __img_front_callback(self, msg: Image):
         if self.camera_front:
             self.__classif_front_pub.publish(self.__img_detection(msg, self.model_front))
 
@@ -116,7 +116,7 @@ class VisionNode(Node):
         if self.camera_bottom:
             self.__classif_bottom_pub.publish(self.__img_detection(msg, self.model_bottom))
 
-    def __img_detection(self, msg: CompressedImage, model: YOLOv8) -> DetectionArray:
+    def __img_detection(self, msg: Image, model: YOLOv8) -> DetectionArray:
         try:
             self.actualise_deep()
             detections = model.detect(self.br.imgmsg_to_cv2(msg), msg.header.frame_id)

@@ -192,6 +192,9 @@ class VisionNode(Node):
 
         angle2 = (IMAGE_WIDTH/2 - x1)*ZED_HFOV/IMAGE_WIDTH
 
+        # x define the front axis
+        # y define the left axis
+
         pointx1 = math.cos(angleX) * distanceX1
         pointy1 = math.sin(angleX) * distanceX1
 
@@ -205,10 +208,8 @@ class VisionNode(Node):
         if hypo == 0:
             self.get_logger().info("issue hypo "+ str(hypo))
             return float(angleX),float(pointSubY/UNIT),float(0),float(0)
-        if pointy1 < pointy2:
-            angleTeta = - math.asin(math.abs(pointx2)/hypo)
-        else:
-            angleTeta = math.asin(math.abs(pointx2)/hypo)
+        
+        angleTeta = math.asin(-(pointx2-pointx1)/hypo)
 
         # y by rotation matrix 2D
         newY = math.sin(angleTeta) * pointx1 + math.cos(angleTeta) * pointy1

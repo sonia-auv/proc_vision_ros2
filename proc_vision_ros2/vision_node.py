@@ -173,7 +173,7 @@ class VisionNode(Node):
             if (self.__actual is None):
                 return float(0),float(0),float(0),float(0)
             
-        x10 = (x2-x1)/10
+        x10 = (x2-x1)//10
 
         # part to get all pixels in bounding box
         area_seeLeft = self.__actual[min(max(0,x1),IMAGE_WIDTH) + x10 :min(max(0,x1),IMAGE_WIDTH) + x10*2, min(max(0,y1),IMAGE_HEIGTH):min(max(0,y2),IMAGE_HEIGTH)]

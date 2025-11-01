@@ -1,4 +1,4 @@
-#include "proc_vision_ros2/Proc_vision_ros2.hpp"
+#include "proc_vision_ros2/Proc_vision.hpp"
 #include <algorithm>
 #include <cstdlib>
 #include <cuda_runtime.h>
@@ -9,27 +9,27 @@ using std::placeholders::_2;
 
 namespace proc_vision_ros2
 {
-    Proc_vision_ros2::Proc_vision_ros2()
-        : Node("proc_vision_ros2"){
+    Proc_vision::Proc_vision()
+        : Node("proc_vision"){
 
         this->declare_parameter("models", std::vector<string>({"robosub-2025-v2"}));
 
-        MODELDIR = (string)std::getenv("SONIA_WS")+"/src/proc_vision_ros2/models/";
+        MODELDIR = (string)std::getenv("SONIA_WS")+"/src/proc_vision/models/";
 
         rclcpp::QoS qosBestEffort(10);
         qosBestEffort.reliability(rclcpp::ReliabilityPolicy::BestEffort).durability(rclcpp::DurabilityPolicy::Volatile).history(rclcpp::HistoryPolicy::KeepLast);
 
         _subscriberFrontCamera =
-            this->create_subscription<sensor_msgs::msg::Image>("/zed/zed_node/left/image_rect_color", 10, std::bind(&Proc_vision_ros2::messageFrontCameraCallBack, this, _1));
+            this->create_subscription<sensor_msgs::msg::Image>("/zed/zed_node/left/image_rect_color", 10, std::bind(&Proc_vision::messageFrontCameraCallBack, this, _1));
 
         _subscriberBottomCameraSim =
-            this->create_subscription<sensor_msgs::msg::Image>("/proc_simulation/front", 10, std::bind(&Proc_vision_ros2::messageFrontCameraCallBack, this, _1));
+            this->create_subscription<sensor_msgs::msg::Image>("/proc_simulation/front", 10, std::bind(&Proc_vision::messageFrontCameraCallBack, this, _1));
 
         _subscriberBottomCamera =
-            this->create_subscription<sensor_msgs::msg::Image>("/camera_array/bottom/image_raw", qosBestEffort, std::bind(&Proc_vision_ros2::messageBottomCameraCallBack, this, _1));
+            this->create_subscription<sensor_msgs::msg::Image>("/camera_array/bottom/image_raw", qosBestEffort, std::bind(&Proc_vision::messageBottomCameraCallBack, this, _1));
 
         _subscriberBottomCameraSim =
-            this->create_subscription<sensor_msgs::msg::Image>("/proc_simulation/bottom", 10, std::bind(&Proc_vision_ros2::messageBottomCameraCallBack, this, _1));
+            this->create_subscription<sensor_msgs::msg::Image>("/proc_simulation/bottom", 10, std::bind(&Proc_vision::messageBottomCameraCallBack, this, _1));
 
 
         _publisherDetectionArrayFront =
@@ -39,10 +39,10 @@ namespace proc_vision_ros2
             this->create_publisher<sonia_common_ros2::msg::DetectionArray>("/proc_vision/bottom/classif", 10);
         
         _subscriberZedDepth =
-            this->create_subscription<sensor_msgs::msg::Image>("/zed/zed_node/depth/depth_registered", 10, std::bind(&Proc_vision_ros2::messageZedDepthCallBack, this, _1));
+            this->create_subscription<sensor_msgs::msg::Image>("/zed/zed_node/depth/depth_registered", 10, std::bind(&Proc_vision::messageZedDepthCallBack, this, _1));
 
         _aiActivationService = this->create_service<sonia_common_ros2::srv::AiActivationService>(
-            "/proc_vision/ai_activation", std::bind(&Proc_vision_ros2::processActuatorRequest, this, _1, _2));
+            "/proc_vision/ai_activation", std::bind(&Proc_vision::processAiActivationRequest, this, _1, _2));
         
         int driverVersion;
 
@@ -74,7 +74,7 @@ namespace proc_vision_ros2
         RCLCPP_INFO(this->get_logger(),  "Started");
     }
 
-    Proc_vision_ros2::~Proc_vision_ros2(){
+    Proc_vision::~Proc_vision(){
         if(_cameraFront){
             _modelFront->~Yolo();
         }
@@ -83,7 +83,7 @@ namespace proc_vision_ros2
         }
     }
 
-    void Proc_vision_ros2::processActuatorRequest(const std::shared_ptr<sonia_common_ros2::srv::AiActivationService::Request> request,
+    void Proc_vision::processAiActivationRequest(const std::shared_ptr<sonia_common_ros2::srv::AiActivationService::Request> request,
                                    std::shared_ptr<sonia_common_ros2::srv::AiActivationService::Response> response){
         vector<string> model_list = this->get_parameter("models").get_value<vector<string>>();
 
@@ -120,19 +120,19 @@ namespace proc_vision_ros2
         }
     }
 
-    void Proc_vision_ros2::messageFrontCameraCallBack(const sensor_msgs::msg::Image &msg){
+    void Proc_vision::messageFrontCameraCallBack(const sensor_msgs::msg::Image &msg){
         if(_cameraFront){
             _publisherDetectionArrayFront->publish(imgDetection(msg,_modelFront));
         }
     }
 
-    void Proc_vision_ros2::messageBottomCameraCallBack(const sensor_msgs::msg::Image &msg){
+    void Proc_vision::messageBottomCameraCallBack(const sensor_msgs::msg::Image &msg){
         if(_cameraBottom){
             _publisherDetectionArrayBottom->publish(imgDetection(msg,_modelBottom));
         }
     }
 
-    sonia_common_ros2::msg::DetectionArray Proc_vision_ros2::imgDetection(const sensor_msgs::msg::Image &msg, Yolo* model){
+    sonia_common_ros2::msg::DetectionArray Proc_vision::imgDetection(const sensor_msgs::msg::Image &msg, Yolo* model){
         try
         {
 	        RCLCPP_INFO(this->get_logger(),  "start");
@@ -163,7 +163,7 @@ namespace proc_vision_ros2
         
     }
 
-    void Proc_vision_ros2::messageZedDepthCallBack(const sensor_msgs::msg::Image &msg){
+    void Proc_vision::messageZedDepthCallBack(const sensor_msgs::msg::Image &msg){
         try
         {
             _lastDepth = cv_bridge::toCvCopy(msg)->image;
@@ -175,11 +175,11 @@ namespace proc_vision_ros2
         
     }
 
-    void Proc_vision_ros2::actualiseDepth(){
+    void Proc_vision::actualiseDepth(){
         _actualDepth = _lastDepth;
     }
 
-    float Proc_vision_ros2::getDeepIstogram(int x1, int y1, int x2, int y2){
+    float Proc_vision::getDeepIstogram(int x1, int y1, int x2, int y2){
         cv::Range rows(min(max(0,x1),IMAGEWIDTH), min(max(0,x2),IMAGEWIDTH));
         cv::Range cols(min(max(0,y1),IMAGEHEIGTH), min(max(0,y2),IMAGEHEIGTH));
         Mat subMatrice = _actualDepth(rows,cols);
@@ -198,7 +198,7 @@ namespace proc_vision_ros2
         return maxVal/_UNIT;
     }
 
-    void Proc_vision_ros2::getAngle(int x1, int y1, int x2, int y2, vector<float> angle){
+    void Proc_vision::getAngle(int x1, int y1, int x2, int y2, vector<float> angle){
         int x10 = (x2-x1)/10;
         cv::Range rowsLeft(min(max(0,x1),IMAGEWIDTH)+ x10, min(max(0,x2),IMAGEWIDTH)+ x10*2);
         cv::Range colsLeft(min(max(0,y1),IMAGEHEIGTH), min(max(0,y2),IMAGEHEIGTH));

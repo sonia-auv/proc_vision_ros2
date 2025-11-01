@@ -15,11 +15,11 @@
 
 namespace proc_vision_ros2
 {
-    class Proc_vision_ros2 : public rclcpp::Node
+    class Proc_vision : public rclcpp::Node
     {
     public:
-        Proc_vision_ros2();
-        ~Proc_vision_ros2();
+        Proc_vision();
+        ~Proc_vision();
 
     private:
 
@@ -29,7 +29,7 @@ namespace proc_vision_ros2
          * @param request message to actiavte cameras and models
          * @param response if the message was correctly traited
          */
-        void processActuatorRequest(const std::shared_ptr<sonia_common_ros2::srv::AiActivationService::Request> request,
+        void processAiActivationRequest(const std::shared_ptr<sonia_common_ros2::srv::AiActivationService::Request> request,
                                    std::shared_ptr<sonia_common_ros2::srv::AiActivationService::Response> response);
 
         // Function for the front camera

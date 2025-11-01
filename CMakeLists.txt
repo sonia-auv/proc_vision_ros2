@@ -13,7 +13,6 @@ find_package(ament_cmake REQUIRED)
 # further dependencies manually.
 # find_package(<dependency> REQUIRED)
 find_package(rclcpp REQUIRED)
-find_package(sonia_common_cpp REQUIRED)
 find_package(sonia_common_ros2 REQUIRED)
 find_package(std_srvs REQUIRED)
 find_package(std_msgs REQUIRED)
@@ -60,7 +59,7 @@ install(TARGETS
 
 target_compile_definitions(${PROJECT_NAME} PRIVATE API_EXPORTS)
 
-ament_target_dependencies(${PROJECT_NAME} rclcpp sonia_common_cpp sonia_common_ros2 std_msgs std_srvs cv_bridge sensor_msgs image_transport OpenCV CUDA yaml-cpp)
+ament_target_dependencies(${PROJECT_NAME} rclcpp sonia_common_ros2 std_msgs std_srvs cv_bridge sensor_msgs image_transport OpenCV CUDA yaml-cpp)
 
 set(TENSORRT_LIBS
         "/usr/lib/aarch64-linux-gnu/libnvinfer.so"

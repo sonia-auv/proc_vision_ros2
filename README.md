@@ -1,6 +1,6 @@
 # proc_vision_ros2
 
-The project use a model of IA to infer on iage from the camera. It's use Yolo for the model
+The project use a model of IA to infer on image from the camera. It's use Yolo for the model
 
 ---
 

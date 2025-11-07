@@ -22,7 +22,7 @@ namespace proc_vision_ros2
         _subscriberFrontCamera =
             this->create_subscription<sensor_msgs::msg::Image>("/zed/zed_node/left/image_rect_color", 10, std::bind(&Proc_vision::messageFrontCameraCallBack, this, _1));
 
-        _subscriberBottomCameraSim =
+        _subscriberFrontCameraSim =
             this->create_subscription<sensor_msgs::msg::Image>("/proc_simulation/front", 10, std::bind(&Proc_vision::messageFrontCameraCallBack, this, _1));
 
         _subscriberBottomCamera =
@@ -58,17 +58,6 @@ namespace proc_vision_ros2
             RCLCPP_INFO_STREAM(this->get_logger(),  "CUDA Driver Version: " << major << "." << minor << "." << patch);
         } else {
             RCLCPP_INFO_STREAM(this->get_logger(),  "CUDA Driver Version: " << cudaGetErrorString(error));
-        }
-        
-        RCLCPP_INFO(this->get_logger(),  "Load");
-
-        try
-        {
-            _modelFront = new Yolo(MODELDIR+"yolo11l",logger);
-        }
-        catch(const std::exception& e)
-        {
-            RCLCPP_INFO_STREAM(this->get_logger(),  "ERROR when infer on the iamge"<<e.what());
         }
         
         RCLCPP_INFO(this->get_logger(),  "Started");
@@ -116,7 +105,7 @@ namespace proc_vision_ros2
         }
         catch(const std::exception& e)
         {
-            RCLCPP_INFO_STREAM(this->get_logger(),  "ERROR when infer on the iamge " << e.what());
+            RCLCPP_INFO_STREAM(this->get_logger(),  "ERROR on the load of the model" << e.what());
         }
     }
 
@@ -138,8 +127,8 @@ namespace proc_vision_ros2
 	        RCLCPP_INFO(this->get_logger(),  "start");
             actualiseDepth();
             detections.detected_object={};
-            auto temp = cv_bridge::toCvCopy(msg);
-            RCLCPP_INFO_STREAM(this->get_logger(),  "Number detection "<<std::to_string(model->detect(temp->image,temp->header.frame_id,detections)));
+            auto imageCV2 = cv_bridge::toCvCopy(msg);
+            RCLCPP_INFO_STREAM(this->get_logger(),  "Number detection "<<std::to_string(model->detect(imageCV2->image,imageCV2->header.frame_id,detections)));
             vector<float> angle = {0.0,0.0,0.0,0.0};
             if(_cameraFront){
                 for(sonia_common_ros2::msg::Detection detection : detections.detected_object){
@@ -179,7 +168,7 @@ namespace proc_vision_ros2
         _actualDepth = _lastDepth;
     }
 
-    float Proc_vision::getDeepIstogram(int x1, int y1, int x2, int y2){
+    float Proc_vision::getDeepHistogram(int x1, int y1, int x2, int y2){
         cv::Range rows(min(max(0,x1),IMAGEWIDTH), min(max(0,x2),IMAGEWIDTH));
         cv::Range cols(min(max(0,y1),IMAGEHEIGTH), min(max(0,y2),IMAGEHEIGTH));
         Mat subMatrice = _actualDepth(rows,cols);

@@ -85,7 +85,7 @@ namespace proc_vision_ros2
          * @param y2 coordinate in y for the bottom right point
          * @return float the distance
          */
-        float getDeepIstogram(int x1, int y1, int x2, int y2);
+        float getDeepHistogram(int x1, int y1, int x2, int y2);
 
         /**
          * @brief Get the Angle object to alignement with it

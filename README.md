@@ -97,6 +97,8 @@ $trtexec --onnx=model.onnx --saveEngine=model.trt --fp16
 
 It optimize your model and trasform in good format
 
+Proc_vision_ros2 transform the model in usable model if it's not done before but i take 5~15 min.
+
 ### 3) add model
 
 Open config/config.yaml

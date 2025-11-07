@@ -6,7 +6,7 @@ int main(int argc, char *argv[])
 {
     rclcpp::init(argc, argv);
 
-    std::shared_ptr<proc_vision_ros2::Proc_vision_ros2> proc_vision = std::make_shared<proc_vision_ros2::Proc_vision_ros2>();
+    std::shared_ptr<proc_vision_ros2::Proc_vision> proc_vision = std::make_shared<proc_vision_ros2::Proc_vision>();
 
     rclcpp::spin(proc_vision);
 

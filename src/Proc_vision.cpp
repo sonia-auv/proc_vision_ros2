@@ -132,7 +132,7 @@ namespace proc_vision_ros2
             vector<float> angle = {0.0,0.0,0.0,0.0};
             if(_cameraFront){
                 for(sonia_common_ros2::msg::Detection detection : detections.detected_object){
-                    detection.distance = getDeepIstogram((int)detection.top_left_x,(int)detection.top_left_y,(int)detection.bottom_right_x,(int)detection.bottom_right_y);
+                    detection.distance = getDeepHistogram((int)detection.top_left_x,(int)detection.top_left_y,(int)detection.bottom_right_x,(int)detection.bottom_right_y);
                     getAngle((int)detection.top_left_x,(int)detection.top_left_y,(int)detection.bottom_right_x,(int)detection.bottom_right_y, angle);
                     detection.angle_alpha = angle[0];
                     detection.distance_beta = angle[1];

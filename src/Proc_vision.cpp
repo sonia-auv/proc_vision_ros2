@@ -129,15 +129,14 @@ namespace proc_vision_ros2
             detections.detected_object={};
             auto imageCV2 = cv_bridge::toCvCopy(msg);
             RCLCPP_INFO_STREAM(this->get_logger(),  "Number detection "<<std::to_string(model->detect(imageCV2->image,imageCV2->header.frame_id,detections)));
-            vector<float> angle = {0.0,0.0,0.0,0.0};
             if(_cameraFront){
                 for(sonia_common_ros2::msg::Detection detection : detections.detected_object){
                     detection.distance = getDeepHistogram((int)detection.top_left_x,(int)detection.top_left_y,(int)detection.bottom_right_x,(int)detection.bottom_right_y);
-                    getAngle((int)detection.top_left_x,(int)detection.top_left_y,(int)detection.bottom_right_x,(int)detection.bottom_right_y, angle);
-                    detection.angle_alpha = angle[0];
-                    detection.distance_beta = angle[1];
-                    detection.angle_teta = angle[2];
-                    detection.distance_teta = angle[3];
+                    getAngle((int)detection.top_left_x,(int)detection.top_left_y,(int)detection.bottom_right_x,(int)detection.bottom_right_y, _angle);
+                    detection.angle_alpha = _angle.angle_alpha;
+                    detection.distance_beta = _angle.distance_beta;
+                    detection.angle_teta = _angle.angle_teta;
+                    detection.distance_teta = _angle.distance_teta;
                 }
             }
 	        RCLCPP_INFO(this->get_logger(),  "end");
@@ -187,7 +186,7 @@ namespace proc_vision_ros2
         return maxVal/_UNIT;
     }
 
-    void Proc_vision::getAngle(int x1, int y1, int x2, int y2, vector<float> angle){
+    void Proc_vision::getAngle(int x1, int y1, int x2, int y2, AngleDetection angle){
         int x10 = (x2-x1)/10;
         cv::Range rowsLeft(min(max(0,x1),IMAGEWIDTH)+ x10, min(max(0,x2),IMAGEWIDTH)+ x10*2);
         cv::Range colsLeft(min(max(0,y1),IMAGEHEIGTH), min(max(0,y2),IMAGEHEIGTH));
@@ -230,17 +229,17 @@ namespace proc_vision_ros2
         double hypo = sqrt((pointXLeft-pointXMid)*(pointXLeft-pointXMid)+(pointYLeft-pointYMid)*(pointYLeft-pointYMid));
 
         if(hypo < 0.01){
-            angle[0] = angleX;
-            angle[1] = pointSubY/_UNIT;
-            angle[2] = 0.0;
-            angle[3] = 0.0;
+            angle.angle_alpha = angleX;
+            angle.distance_beta = pointSubY/_UNIT;
+            angle.angle_teta = 0.0;
+            angle.distance_teta = 0.0;
         }else{
             double angleTeta = - asin((pointXMid - pointXLeft)/hypo);
             double newDistanceY = sin(angleTeta)*pointXMid+ cos(angleTeta)*pointYMid;
-            angle[0] = angleX;
-            angle[1] = pointSubY/_UNIT;
-            angle[2] = angleTeta;
-            angle[3] = newDistanceY/_UNIT;
+            angle.angle_alpha = angleX;
+            angle.distance_beta = pointSubY/_UNIT;
+            angle.angle_teta = angleTeta;
+            angle.distance_teta = newDistanceY/_UNIT;
         }
     }
 }

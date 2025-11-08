@@ -21,6 +21,15 @@ namespace proc_vision_ros2
         Proc_vision();
         ~Proc_vision();
 
+        struct AngleDetection
+        {
+            float angle_alpha = 0;
+            float distance_beta = 0;
+            float angle_teta = 0;
+            float distance_teta = 0;
+        };
+        
+
     private:
 
         /**
@@ -127,6 +136,8 @@ namespace proc_vision_ros2
         Logger logger;
 
         string MODELDIR;
+
+        AngleDetection _angle;
 
         // constant Image link need to be changed
         const int ZEDVFOV = 52/2;

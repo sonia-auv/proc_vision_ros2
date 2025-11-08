@@ -89,9 +89,11 @@ namespace proc_vision_ros2
                 _cameraBottom =false;
                 _cameraFront =true;
                 _modelFront = new Yolo(MODELDIR+model_name,logger);
+                _modelBottom = NULL;
             }else if(request.get()->camera_choice == request.get()->BOTTOM){
                 _cameraBottom =true;
                 _cameraFront =false;
+                _modelFront = NULL;
                 _modelBottom = new Yolo(MODELDIR+model_name,logger);
             }else if(request.get()->camera_choice == request.get()->BOTH) {
                 _cameraBottom =true;
@@ -101,6 +103,8 @@ namespace proc_vision_ros2
             }else{
                 _cameraBottom = false;
                 _cameraFront = false;
+                _modelBottom = NULL;
+                _modelFront = NULL;
             }
         }
         catch(const std::exception& e)

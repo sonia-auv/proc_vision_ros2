@@ -64,12 +64,8 @@ namespace proc_vision_ros2
     }
 
     Proc_vision::~Proc_vision(){
-        if(_cameraFront){
-            _modelFront->~Yolo();
-        }
-        if(_cameraBottom){
-            _modelBottom->~Yolo();
-        }
+        _modelBottom = NULL;
+        _modelFront = NULL;
     }
 
     void Proc_vision::processAiActivationRequest(const std::shared_ptr<sonia_common_ros2::srv::AiActivationService::Request> request,

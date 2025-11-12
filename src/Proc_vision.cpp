@@ -83,7 +83,7 @@ namespace proc_vision_ros2
 
             if(request.get()->camera_choice == request.get()->FRONT){
                 RCLCPP_INFO_STREAM(this->get_logger(),  "Part0");
-                _modelFront = new Yolo(MODELDIR+model_name,logger);
+                _modelFront = new Yolo(MODELDIR+model_name,logger,this);
                 RCLCPP_INFO_STREAM(this->get_logger(),  "Part1");
                 _modelBottom = NULL;
                 RCLCPP_INFO_STREAM(this->get_logger(),  "Part2");
@@ -91,12 +91,12 @@ namespace proc_vision_ros2
                 _cameraFront =true;
             }else if(request.get()->camera_choice == request.get()->BOTTOM){
                 _modelFront = NULL;
-                _modelBottom = new Yolo(MODELDIR+model_name,logger);
+                _modelBottom = new Yolo(MODELDIR+model_name,logger,this);
                 _cameraBottom =true;
                 _cameraFront =false;
             }else if(request.get()->camera_choice == request.get()->BOTH) {
-                _modelFront = new Yolo(MODELDIR+model_name,logger);
-                _modelBottom = new Yolo(MODELDIR+model_name,logger);
+                _modelFront = new Yolo(MODELDIR+model_name,logger,this);
+                _modelBottom = new Yolo(MODELDIR+model_name,logger,this);
                 _cameraBottom =true;
                 _cameraFront =true;
             }else{

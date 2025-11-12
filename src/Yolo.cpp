@@ -19,7 +19,7 @@ namespace proc_vision_ros2
     #define warmup true
 
     // Constructor for the Yolo class
-    Yolo::Yolo(string model_path, nvinfer1::ILogger& logger,Proc_vision proc_vision)
+    Yolo::Yolo(string model_path, nvinfer1::ILogger& logger,proc_vision_ros2::Proc_vision proc_vision)
     {
 
         string model_path_enggine = model_path+"/model.engine";
@@ -58,7 +58,7 @@ namespace proc_vision_ros2
     }
 
     // Initialize the engine from a serialized engine file
-    void Yolo::init(std::string engine_path, nvinfer1::ILogger& logger)
+    void Yolo::init(std::string engine_path, nvinfer1::ILogger& logger,proc_vision_ros2::Proc_vision proc_vision)
     {
         RCLCPP_INFO_STREAM(proc_vision->get_logger(),  "Test3");
         // Open the engine file in binary mode

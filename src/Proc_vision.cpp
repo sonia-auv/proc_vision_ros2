@@ -82,11 +82,8 @@ namespace proc_vision_ros2
             }
 
             if(request.get()->camera_choice == request.get()->FRONT){
-                RCLCPP_INFO_STREAM(this->get_logger(),  "Part0");
                 _modelFront = new Yolo(MODELDIR+model_name,logger,this);
-                RCLCPP_INFO_STREAM(this->get_logger(),  "Part1");
                 _modelBottom = NULL;
-                RCLCPP_INFO_STREAM(this->get_logger(),  "Part2");
                 _cameraBottom =false;
                 _cameraFront =true;
             }else if(request.get()->camera_choice == request.get()->BOTTOM){

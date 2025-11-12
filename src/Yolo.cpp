@@ -19,22 +19,19 @@ namespace proc_vision_ros2
     #define warmup true
 
     // Constructor for the Yolo class
-    Yolo::Yolo(string model_path, nvinfer1::ILogger& logger,proc_vision_ros2::Proc_vision proc_vision)
+    Yolo::Yolo(string model_path, nvinfer1::ILogger& logger)
     {
 
         string model_path_enggine = model_path+"/model.engine";
         
-        RCLCPP_INFO_STREAM(proc_vision->get_logger(), model_path_enggine);
         // Check if the model path does not contain ".onnx"
         if (model_path.find(".onnx") == std::string::npos)
         {
-            RCLCPP_INFO_STREAM(proc_vision->get_logger(),  "Test2");
             // Initialize the engine from a serialized engine file
             init(model_path_enggine, logger, proc_vision);
         }
         else
         {
-            RCLCPP_INFO_STREAM(proc_vision->get_logger(),  "Test3");
             // Build the engine from an ONNX model
             build(model_path_enggine, logger);
             // Save the built engine to a file
@@ -58,9 +55,8 @@ namespace proc_vision_ros2
     }
 
     // Initialize the engine from a serialized engine file
-    void Yolo::init(std::string engine_path, nvinfer1::ILogger& logger,proc_vision_ros2::Proc_vision proc_vision)
+    void Yolo::init(std::string engine_path, nvinfer1::ILogger& logger)
     {
-        RCLCPP_INFO_STREAM(proc_vision->get_logger(),  "Test3");
         // Open the engine file in binary mode
         ifstream engineStream(engine_path, ios::binary);
         // Move to the end to determine file size
@@ -74,15 +70,12 @@ namespace proc_vision_ros2
         engineStream.read(engineData.get(), modelSize);
         engineStream.close();
 
-        RCLCPP_INFO_STREAM(proc_vision->get_logger(),  "Test4");
-
         // Create a TensorRT runtime instance
         runtime = createInferRuntime(logger);
         // Deserialize the CUDA engine from the engine data
         engine = runtime->deserializeCudaEngine(engineData.get(), modelSize);
         // Create an execution context for the engine
         context = engine->createExecutionContext();
-        RCLCPP_INFO_STREAM(proc_vision->get_logger(),  "Test5");
 
         // Retrieve input dimensions from the engine
         input_h = engine->getBindingDimensions(0).d[2];
@@ -92,8 +85,6 @@ namespace proc_vision_ros2
         num_detections = engine->getBindingDimensions(1).d[2];
         // Calculate the number of classes based on detection attributes
         num_classes = detection_attribute_size - 4;
-
-        RCLCPP_INFO_STREAM(proc_vision->get_logger(),  "Test6");
 
         // Allocate CPU memory for output buffer
         cpu_output_buffer = new float[detection_attribute_size * num_detections];

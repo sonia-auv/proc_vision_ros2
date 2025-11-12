@@ -6,8 +6,6 @@
 #include "NvInfer.h"
 #include <opencv2/opencv.hpp>
 
-#include "proc_vision_ros2/Proc_vision.hpp"
-
 using namespace nvinfer1;
 using namespace std;
 using namespace cv;
@@ -28,7 +26,7 @@ namespace proc_vision_ros2
              * @param model_path Path to the model engine or ONNX file.
              * @param logger Reference to a TensorRT logger for error reporting.
              */
-            Yolo(string model_path, nvinfer1::ILogger& logger,proc_vision_ros2::Proc_vision proc_vision);
+            Yolo(string model_path, nvinfer1::ILogger& logger);
 
             /**
              * @brief Destructor to clean up resources.
@@ -50,7 +48,7 @@ namespace proc_vision_ros2
              * @param engine_path Path to the serialized TensorRT engine file.
              * @param logger Reference to a TensorRT logger for error reporting.
              */
-            void init(std::string engine_path, nvinfer1::ILogger& logger,proc_vision_ros2::Proc_vision proc_vision);
+            void init(std::string engine_path, nvinfer1::ILogger& logger);
 
             /**
              * @brief Preprocess the input image.

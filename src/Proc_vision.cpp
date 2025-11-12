@@ -12,9 +12,9 @@ namespace proc_vision_ros2
     Proc_vision::Proc_vision()
         : Node("proc_vision"){
 
-        this->declare_parameter("models", std::vector<string>({"robosub-2025-v2"}));
+        this->declare_parameter("models", std::vector<string>({"yolo11l"}));
 
-        MODELDIR = (string)std::getenv("SONIA_WS")+"/src/proc_vision/models/";
+        MODELDIR = (string)std::getenv("SONIA_WS")+"/src/proc_vision_ros2/models/";
 
         rclcpp::QoS qosBestEffort(10);
         qosBestEffort.reliability(rclcpp::ReliabilityPolicy::BestEffort).durability(rclcpp::DurabilityPolicy::Volatile).history(rclcpp::HistoryPolicy::KeepLast);

@@ -16,7 +16,7 @@ namespace proc_vision_ros2
     #define isFP16 true
 
     // Define whether to perform model warmup
-    #define warmup true
+    #define warmup false
 
     // Constructor for the Yolo class
     Yolo::Yolo(string model_path, nvinfer1::ILogger& logger)
@@ -28,7 +28,7 @@ namespace proc_vision_ros2
         if (model_path.find(".onnx") == std::string::npos)
         {
             // Initialize the engine from a serialized engine file
-            init(model_path_enggine, logger, proc_vision);
+            init(model_path_enggine, logger);
         }
         else
         {
@@ -77,34 +77,7 @@ namespace proc_vision_ros2
         // Create an execution context for the engine
         context = engine->createExecutionContext();
 
-        // Retrieve input dimensions from the engine
-        input_h = engine->getBindingDimensions(0).d[2];
-        input_w = engine->getBindingDimensions(0).d[3];
-        // Retrieve detection attributes and number of detections
-        detection_attribute_size = engine->getBindingDimensions(1).d[1];
-        num_detections = engine->getBindingDimensions(1).d[2];
-        // Calculate the number of classes based on detection attributes
-        num_classes = detection_attribute_size - 4;
-
-        // Allocate CPU memory for output buffer
-        cpu_output_buffer = new float[detection_attribute_size * num_detections];
-        // Allocate GPU memory for input buffer (assuming 3 channels: RGB)
-        CUDA_CHECK(cudaMalloc(&gpu_buffers[0], 3 * input_w * input_h * sizeof(float)));
-        // Allocate GPU memory for output buffer
-        CUDA_CHECK(cudaMalloc(&gpu_buffers[1], detection_attribute_size * num_detections * sizeof(float)));
-
-        // Initialize CUDA preprocessing with maximum image size
-        cuda_preprocess_init(MAX_IMAGE_SIZE);
-
-        // Create a CUDA stream for asynchronous operations
-        CUDA_CHECK(cudaStreamCreate(&stream));
-
-        // Perform model warmup if enabled
-        if (warmup) {
-            for (int i = 0; i < 10; i++) {
-                this->infer(); // Run inference to warm up the model
-            }
-        }
+        loadingParam();
     }
 
     void Yolo::loadingParam(){

@@ -82,20 +82,22 @@ namespace proc_vision_ros2
             }
 
             if(request.get()->camera_choice == request.get()->FRONT){
+                _modelFront = new Yolo(MODELDIR+model_name,logger);
+                RCLCPP_INFO_STREAM(this->get_logger(),  "Part1");
+                _modelBottom = NULL;
+                RCLCPP_INFO_STREAM(this->get_logger(),  "Part2");
                 _cameraBottom =false;
                 _cameraFront =true;
-                _modelFront = new Yolo(MODELDIR+model_name,logger);
-                _modelBottom = NULL;
             }else if(request.get()->camera_choice == request.get()->BOTTOM){
-                _cameraBottom =true;
-                _cameraFront =false;
                 _modelFront = NULL;
                 _modelBottom = new Yolo(MODELDIR+model_name,logger);
-            }else if(request.get()->camera_choice == request.get()->BOTH) {
                 _cameraBottom =true;
-                _cameraFront =true;
+                _cameraFront =false;
+            }else if(request.get()->camera_choice == request.get()->BOTH) {
                 _modelFront = new Yolo(MODELDIR+model_name,logger);
                 _modelBottom = new Yolo(MODELDIR+model_name,logger);
+                _cameraBottom =true;
+                _cameraFront =true;
             }else{
                 _cameraBottom = false;
                 _cameraFront = false;
@@ -105,7 +107,7 @@ namespace proc_vision_ros2
         }
         catch(const std::exception& e)
         {
-            RCLCPP_INFO_STREAM(this->get_logger(),  "ERROR on the load of the model" << e.what());
+            RCLCPP_INFO_STREAM(this->get_logger(),  "ERROR on the load of the model " << e.what());
         }
     }
 

@@ -81,7 +81,7 @@ namespace proc_vision_ros2
         loadingParam();
     }
 
-    Yolo::loadingParam(){
+    void Yolo::loadingParam(){
 
         // Retrieve input dimensions from the engine
         input_h = engine->getBindingDimensions(0).d[2];

@@ -72,8 +72,8 @@ namespace proc_vision_ros2
                                    std::shared_ptr<sonia_common_ros2::srv::AiActivationService::Response> response){
         vector<string> model_list = this->get_parameter("models").get_value<vector<string>>();
 
-        //try
-        //{
+        try
+        {
             string model_name;
             if(request.get()->model_choice >=0 and request.get()->model_choice <= model_list.size()){
                 model_name = model_list[request.get()->model_choice];
@@ -104,11 +104,11 @@ namespace proc_vision_ros2
                 _modelBottom = NULL;
                 _modelFront = NULL;
             }
-        /*}
+        }
         catch(const std::exception& e)
         {
             RCLCPP_INFO_STREAM(this->get_logger(),  "ERROR on the load of the model " << e.what());
-        }*/
+        }
     }
 
     void Proc_vision::messageFrontCameraCallBack(const sensor_msgs::msg::Image &msg){

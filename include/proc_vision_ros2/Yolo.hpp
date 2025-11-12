@@ -16,7 +16,6 @@ namespace proc_vision_ros2
     class Yolo{
         public:
 
-            Yolo();
             /**
              * @brief Constructor to initialize the YOLOv11 object.
              *

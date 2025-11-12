@@ -82,18 +82,18 @@ namespace proc_vision_ros2
             }
 
             if(request.get()->camera_choice == request.get()->FRONT){
-                _modelFront = new Yolo(MODELDIR+model_name,logger,this);
+                _modelFront = new Yolo(MODELDIR+model_name,logger);
                 _modelBottom = NULL;
                 _cameraBottom =false;
                 _cameraFront =true;
             }else if(request.get()->camera_choice == request.get()->BOTTOM){
                 _modelFront = NULL;
-                _modelBottom = new Yolo(MODELDIR+model_name,logger,this);
+                _modelBottom = new Yolo(MODELDIR+model_name,logger);
                 _cameraBottom =true;
                 _cameraFront =false;
             }else if(request.get()->camera_choice == request.get()->BOTH) {
-                _modelFront = new Yolo(MODELDIR+model_name,logger,this);
-                _modelBottom = new Yolo(MODELDIR+model_name,logger,this);
+                _modelFront = new Yolo(MODELDIR+model_name,logger);
+                _modelBottom = new Yolo(MODELDIR+model_name,logger);
                 _cameraBottom =true;
                 _cameraFront =true;
             }else{

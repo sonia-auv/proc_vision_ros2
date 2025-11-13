@@ -21,11 +21,11 @@ class NodeTosee(Node):
 
     def __init__(self):
         self.declare_parameter("models", Parameter.Type.STRING_ARRAY)
-        self.__front_cam_sub = self.create_subscription(CompressedImage, "camera_array/front/image_raw/compressed", self.__img_front_callback, 10)
+        self.__front_cam_sub = self.create_subscription(CompressedImage, "zed/zed_node/left/image_rect_color/compressed", self.__img_front_callback, 10)
         self.__bottom_cam_sub = self.create_subscription(Image, "camera_array/bottom/image_raw", self.__img_bottom_callback, 10)
         self.__classif_front_sub = self.create_subscription(DetectionArray, "proc_vision/front/classif", self.__create_magic_front, 10)
         self.__classif_bottom_sub = self.create_subscription(DetectionArray, "proc_vision/bottom/classif", self.__create_magic_bottom, 10)
-        self.__zed_depth = self.create_subscription(DetectionArray, "zed/zed_node/depth/depth_registered/compressed", self.__get_depth, 10)
+        self.__zed_depth = self.create_subscription(Image, "zed/zed_node/depth/depth_registered", self.__get_depth, 10)
         self.__classif_front_pub = self.create_publisher(Image, "proc_vision/front/image", 10)
         self.__classif_bottom_pub = self.create_publisher(Image, "proc_vision/bottom/image", 10)
         self.__bottom_list = []

@@ -6,6 +6,7 @@
 #include <NvOnnxParser.h>        // NVIDIA ONNX parser for TensorRT
 #include <fstream>
 #include <iostream>
+#include <cstring>
 
 namespace proc_vision_ros2
 {
@@ -18,19 +19,15 @@ namespace proc_vision_ros2
     // Define whether to perform model warmup
     #define warmup false
 
-    Yolo::Yolo(){
-        _initia=false;
-    }
-
     // Constructor for the Yolo class
     Yolo::Yolo(string model_path, nvinfer1::ILogger& logger)
     {
-        _initia=true;
 
         string model_path_enggine = model_path+"/model.engine";
-        
+
+	string comparate = ".onnx";
         // Check if the model path does not contain ".onnx"
-        if (model_path.find(".onnx") == std::string::npos)
+        if (model_path_enggine.compare(model_path_enggine.size() - comparate.size(), comparate.size(), comparate))
         {
             // Initialize the engine from a serialized engine file
             init(model_path_enggine, logger);
@@ -81,6 +78,11 @@ namespace proc_vision_ros2
         engine = runtime->deserializeCudaEngine(engineData.get(), modelSize);
         // Create an execution context for the engine
         context = engine->createExecutionContext();
+
+        loadingParam();
+    }
+
+    void Yolo::loadingParam(){
 
         // Retrieve input dimensions from the engine
         input_h = engine->getBindingDimensions(0).d[2];
@@ -296,9 +298,16 @@ namespace proc_vision_ros2
             file.write((const char*)data->data(), data->size());
             file.close();
 
+            // Load all parameters to infer
+            loadingParam();
+
             // Free the serialized data memory
             delete data;
         }
+
+        // Load all parameters to infer
+        loadingParam();
+
         return true;
     }
 

@@ -28,7 +28,7 @@ namespace proc_vision_ros2
             // Save the built engine to a file
             saveEngine(model_path_enggine);
         // Check if the model path does not contain ".onnx"
-        if (model_path.find(".onnx") == std::string::npos)
+        if (model_path_enggine.compare(model_path_enggine.size() - ".onnx".size(), ".onnx".size(), ".onnx") == 0)
         {
             // Initialize the engine from a serialized engine file
             // init(model_path_enggine, logger);
@@ -299,12 +299,15 @@ namespace proc_vision_ros2
             file.write((const char*)data->data(), data->size());
             file.close();
 
+            // Load all parameters to infer
+            loadingParam();
+
             // Free the serialized data memory
             delete data;
         }
 
         // Load all parameters to infer
-        //loadingParam();
+        loadingParam();
 
         return true;
     }

@@ -7,6 +7,14 @@
 #include <fstream>
 #include <iostream>
 
+#if NV_TENSORRT_MAJOR < 10
+// For TensorRT versions less than 10, get binding dimensions directly
+#define GET_INPUT_DIMENSIONS(engine, index) ((engine)->getBindingDimensions((index)))
+#else
+// For TensorRT versions 10 and above, use getTensorShape
+#define GET_INPUT_DIMENSIONS(engine, index) ((engine)->getTensorShape((engine)->getIOTensorName((index))))
+#endif
+
 namespace proc_vision_ros2
 {
     // Initialize a static logger instance
@@ -45,18 +53,10 @@ namespace proc_vision_ros2
 
         _config = YAML::LoadFile(model_path+"/data.yaml")["names"];
 
-        // Handle input dimensions based on TensorRT version
-        #if NV_TENSORRT_MAJOR < 10
-            // For TensorRT versions less than 10, get binding dimensions directly
-            auto input_dims = engine->getBindingDimensions(0);
-            input_h = input_dims.d[2];
-            input_w = input_dims.d[3];
-        #else
-            // For TensorRT versions 10 and above, use getTensorShape
-            auto input_dims = engine->getTensorShape(engine->getIOTensorName(0));
-            input_h = input_dims.d[2];
-            input_w = input_dims.d[3];
-        #endif
+		auto input_dims = GET_INPUT_DIMENSIONS(engine, 0);
+
+		input_h = input_dims.d[2];
+		input_w = input_dims.d[3];
     }
 
     // Initialize the engine from a serialized engine file
@@ -83,11 +83,13 @@ namespace proc_vision_ros2
         context = engine->createExecutionContext();
 
         // Retrieve input dimensions from the engine
-        input_h = engine->getBindingDimensions(0).d[2];
-        input_w = engine->getBindingDimensions(0).d[3];
+		input_h = GET_INPUT_DIMENSIONS(engine, 0).d[2];
+		input_w = GET_INPUT_DIMENSIONS(engine, 0).d[3];
+
         // Retrieve detection attributes and number of detections
-        detection_attribute_size = engine->getBindingDimensions(1).d[1];
-        num_detections = engine->getBindingDimensions(1).d[2];
+		detection_attribute_size = GET_INPUT_DIMENSIONS(engine, 1).d[1];
+		num_detections = GET_INPUT_DIMENSIONS(engine, 1).d[2];
+
         // Calculate the number of classes based on detection attributes
         num_classes = detection_attribute_size - 4;
 

@@ -30,6 +30,11 @@ if(NOT CUDA_FOUND)
 endif()
 
 set(TENSORRT_PATH "/usr/local/cuda/")
+
+execute_process(
+	COMMAND "python3 -c 'import tensorrt as trt;print(trt.__version__)' | cut -d '.' -f 1"
+	OUTPUT_VARIABLE TENSORRT_MAJOR_VERSION
+	TIMEOUT 5)
         
 include_directories(include ${TENSORRT_PATH}/include
   /usr/local/cuda/targets/aarch64-linux/include)
@@ -67,10 +72,18 @@ else()
 	set(ARCH "aarch64")
 endif()
 
-set(TENSORRT_LIBS
-	"/usr/lib/${ARCH}-linux-gnu/libnvinfer.so"
-	"/usr/lib/${ARCH}-linux-gnu/libnvonnxparser.so"
-	"/usr/lib/${ARCH}-linux-gnu/libnvinfer_plugin.so")
+if (TENSORRT_MAJOR_VERSION LESS 10)
+	set(TENSORRT_LIBS
+		"/usr/lib/${ARCH}-linux-gnu/libnvinfer.so"
+		"/usr/lib/${ARCH}-linux-gnu/libnvonnxparser.so"
+		"/usr/lib/${ARCH}-linux-gnu/libnvparsers.so"
+		"/usr/lib/${ARCH}-linux-gnu/libnvinfer_plugin.so")
+else()
+	set(TENSORRT_LIBS
+		"/usr/lib/${ARCH}-linux-gnu/libnvinfer.so"
+		"/usr/lib/${ARCH}-linux-gnu/libnvonnxparser.so"
+		"/usr/lib/${ARCH}-linux-gnu/libnvinfer_plugin.so")
+endif()
 
 # Link libraries to the target
 target_link_libraries(

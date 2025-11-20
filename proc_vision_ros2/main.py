@@ -1,10 +1,10 @@
 import rclpy
-from .vision_node import VisionNode
+from .node_to_see import NodeTosee
 
 
 def main():
     rclpy.init()
-    node = VisionNode()
+    node = NodeTosee()
 
     rclpy.spin(node)
 

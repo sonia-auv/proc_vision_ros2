@@ -27,14 +27,15 @@ namespace proc_vision_ros2
 
         if(file.good()){
             // Initialize the engine from a serialized engine file
-            init(model_path_enggine, logger);
+            init(model_path+"/model.engine", logger);
         }else{
             std::ifstream fileOnnx(model_path+"/model.onnx");
             if(fileOnnx.good()){
+                string model_path_engine = model_path+"/model.onnx";
                 // Build the engine from an ONNX model
-                build(model_path_enggine, logger);
+                build(model_path_engine, logger);
                 // Save the built engine to a file
-                saveEngine(model_path_enggine);
+                saveEngine(model_path_engine);
             }
         }
 

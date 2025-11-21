@@ -23,7 +23,7 @@ namespace proc_vision_ros2
     Yolo::Yolo(string model_path, nvinfer1::ILogger& logger)
     {
 
-        string model_path_enggine = model_path+"/model.engine";
+        string model_path_enggine = model_path+"/model.onnx";
 
 	    string comparate = ".onnx";
         // Check if the model path does not contain ".onnx"

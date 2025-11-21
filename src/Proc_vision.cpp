@@ -101,6 +101,7 @@ namespace proc_vision_ros2
                 _cameraFront = false;
                 _modelBottom = NULL;
                 _modelFront = NULL;
+                model_name = "";
             }
 
             response->model_name = model_name;

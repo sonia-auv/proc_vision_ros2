@@ -1,11 +1,9 @@
-/vision_node:
+/proc_vision:
   ros__parameters:
 
     models: [
+      "test_aquadome_2025",
       "yolo11l",
       "yolo11m",
-      "robosub-2025-v2",
-      "robosub-2025-v1",
-      "robosub-2025-v0",
-      "sim-2025"
+      "robosub-2025-v2"
       ]

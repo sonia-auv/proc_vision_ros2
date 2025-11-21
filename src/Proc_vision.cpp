@@ -105,7 +105,7 @@ namespace proc_vision_ros2
             }
 
             response->model_name = model_name;
-            RCLCPP_INFO_STREAM(this->get_logger(),  "Model " << response->model_name);
+            RCLCPP_INFO(this->get_logger(),  "Model " << response->model_name);
         }
         catch(const std::exception& e)
         {

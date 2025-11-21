@@ -23,21 +23,19 @@ namespace proc_vision_ros2
     Yolo::Yolo(string model_path, nvinfer1::ILogger& logger)
     {
 
-        string model_path_enggine = model_path+"/model.onnx";
+        std::ifstream file(model_path+"/model.engine");
 
-	    string comparate = ".onnx";
-        // Check if the model path does not contain ".onnx"
-        if (model_path_enggine.compare(model_path_enggine.size() - comparate.size(), comparate.size(), comparate))
-        {
+        if(file.good()){
             // Initialize the engine from a serialized engine file
             init(model_path_enggine, logger);
-        }
-        else
-        {
-            // Build the engine from an ONNX model
-            build(model_path_enggine, logger);
-            // Save the built engine to a file
-            saveEngine(model_path_enggine);
+        }else{
+            std::ifstream fileOnnx(model_path+"/model.onnx");
+            if(fileOnnx.good()){
+                // Build the engine from an ONNX model
+                build(model_path_enggine, logger);
+                // Save the built engine to a file
+                saveEngine(model_path_enggine);
+            }
         }
 
         _config = YAML::LoadFile(model_path+"/data.yaml")["names"];

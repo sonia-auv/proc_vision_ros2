@@ -25,7 +25,7 @@ namespace proc_vision_ros2
 
         string model_path_enggine = model_path+"/model.onnx";
 
-	string comparate = ".onnx";
+	    string comparate = ".onnx";
         // Check if the model path does not contain ".onnx"
         if (model_path_enggine.compare(model_path_enggine.size() - comparate.size(), comparate.size(), comparate))
         {

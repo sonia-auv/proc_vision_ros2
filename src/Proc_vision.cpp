@@ -12,7 +12,7 @@ namespace proc_vision_ros2
     Proc_vision::Proc_vision()
         : Node("proc_vision"){
 
-        this->declare_parameter("models", std::vector<string>({"yolo11l"}));
+        this->declare_parameter("models", std::vector<string>({"test_aquadome_2025"}));
 
         MODELDIR = (string)std::getenv("SONIA_WS")+"/src/proc_vision_ros2/models/";
 

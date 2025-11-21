@@ -1,4 +1,4 @@
-/vision_node:
+/proc_vision:
   ros__parameters:
 
     models: [

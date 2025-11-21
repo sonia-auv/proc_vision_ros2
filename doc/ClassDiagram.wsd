@@ -1,0 +1,75 @@
+@startuml
+class main{
+}
+
+class Proc_vision{
+    - bool _cameraFront
+    - bool _cameraBottom
+    - cv_bridge::CvImagePtr _cvBridge
+    - cv::Mat _actualDepth
+    - Mat::Mat _lastDepth
+    - Logger logger
+    - string MODELDIR
+    - sonia_common_ros2::msg::DetectionArray detections
+
+    + Proc_vision()
+    + ~Proc_vision()
+    - processAiActivationRequest() : void
+    - messageFrontCameraCallBack(msg : sensor_msgs::msg::Image) : void
+    - messageBottomCameraCallBack(msg : sensor_msgs::msg::Image) : void
+    - messageBottomCameraCallBack(msg : sensor_msgs::msg::Image , model: Yolo) : sonia_common_ros2::msg::DetectionArray
+    - messageZedDepthCallBack(msg : sensor_msgs::msg::Image) : void
+    - actualiseDepth() : void
+    - getDeepHistogram(x1 : int,y1 :int,x2 :int,y2 :int) : void
+    - getAngle(x1 : int,y1 :int,x2 :int,y2 :int, angle : AngleDetection) : void
+}
+
+struct AngleDetection{
+    float angle_alpha
+    float distance_beta
+    float angle_teta
+    float distance_teta
+}
+
+class Yolo{
+    - int input_w
+    - int input_h
+    - int num_detections
+    - int detection_attribute_size
+    - int num_classes
+    - int MAX_IMAGE_SIZE
+    - float conf_threshold
+    - float nms_threshold
+    - float*[] gpu_buffers
+    - float* cpu_output_buffer
+    - cudaStream_t stream
+    - IRuntime* runtime
+    - ICudaEngine* engine
+    - IExecutionContext* context
+
+    + Yolo()
+    + Yolo(model_path: string, logger: nvinfer1::ILogger&)
+    + detect(image : Mat&,frameID : string, output : sonia_common_ros2::msg::DetectionArray&) :int
+    - init(engine_path: std::string, logger: nvinfer1::ILogger&):void
+    - preprocess(image: Mat&):void
+    - loadingParam():void
+    - infer():void
+    - postprocess(output: sonia_common_ros2::msg::DetectionArray&):int
+    - build(onnxPath: std::string, logger: nvinfer1::ILogger&):void
+    - saveEngine(filename: std::string&):bool
+}
+
+
+class preprocess{
+    + cuda_preprocess(src : uint8_t*, src_width :int, src_height:int, float dst*,dst_width :int,dst_height:int, stream:cudaStream_t):void
+    + cuda_preprocess_init(max_image_size: int): void
+    + cuda_preprocess_destroy(): void
+}
+
+main--> "1" Proc_vision
+Proc_vision--> "_angle\n1" AngleDetection
+Proc_vision --|> Node
+Proc_vision--> "_modelBottom\n0..1" Yolo
+Proc_vision--> "_modelFront\n0..1" Yolo
+Yolo--> "1" preprocess
+@enduml

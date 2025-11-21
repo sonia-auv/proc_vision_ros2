@@ -1,0 +1,25 @@
+path: /home/sonia/ai-framework/datasets/robosub-2025_1
+train: train/images
+val: val/images
+test: test/images
+
+nc: 18
+names:
+  0: gate-sawfish
+  1: gate-shark
+  2: gate
+  3: torpedo-poster
+  4: torpedo-target
+  5: sawfish
+  6: shark
+  7: bin
+  8: bin-inner
+  9: table
+  10: path
+  11: red-slalom
+  12: white-slalom
+  13: yellow-box
+  14: pink-box
+  15: spoon
+  16: bottle
+  17: AUV

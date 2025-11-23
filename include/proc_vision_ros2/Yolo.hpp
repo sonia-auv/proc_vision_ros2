@@ -116,6 +116,9 @@ namespace proc_vision_ros2
             float conf_threshold = 0.3f; //!< Confidence threshold for filtering detections.
             float nms_threshold = 0.4f; //!< Non-Maximum Suppression (NMS) threshold for filtering overlapping boxes.
 
+            float imageHeight; //!< Image Height factor
+            float imageWidth; //!< Image Width factor
+
             string frameId;
 
             YAML::Node _config;

@@ -181,10 +181,10 @@ namespace proc_vision_ros2
             // Check if the confidence score exceeds the threshold
             if (score > conf_threshold) {
                 // Extract bounding box coordinates
-                const float cx = det_output.at<float>(0, i);
-                const float cy = det_output.at<float>(1, i);
-                const float ow = det_output.at<float>(2, i);
-                const float oh = det_output.at<float>(3, i);
+                const float cx = det_output.at<float>(0, i) * imageWidth;
+                const float cy = det_output.at<float>(1, i) * imageHeight;
+                const float ow = det_output.at<float>(2, i) * imageWidth;
+                const float oh = det_output.at<float>(3, i) * imageHeight;
                 Rect box;
                 // Calculate top-left corner of the bounding box
                 box.x = static_cast<int>((cx - 0.5 * ow));
@@ -314,6 +314,9 @@ namespace proc_vision_ros2
     int Yolo::detect(Mat& image,string frameID, sonia_common_ros2::msg::DetectionArray& output)
     {
         frameId = frameID;
+
+        imageHeight = image.rows / input_h;
+        imageWidth = image.cols / input_w;
 
         // Preprocess the frame
         preprocess(image);

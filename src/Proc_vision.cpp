@@ -75,7 +75,7 @@ namespace proc_vision_ros2
         try
         {
             string model_name;
-            if(request.get()->model_choice >=0 and request.get()->model_choice <= model_list.size()){
+            if(request.get()->model_choice >=0 and request.get()->model_choice < model_list.size()){
                 model_name = model_list[request.get()->model_choice];
             }else{
                 model_name = model_list[0];

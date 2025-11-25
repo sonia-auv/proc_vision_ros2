@@ -181,10 +181,10 @@ namespace proc_vision_ros2
             // Check if the confidence score exceeds the threshold
             if (score > conf_threshold) {
                 // Extract bounding box coordinates
-                const float cx = det_output.at<float>(0, i) * imageWidth;
-                const float cy = det_output.at<float>(1, i) * imageHeight;
-                const float ow = det_output.at<float>(2, i) * imageWidth;
-                const float oh = det_output.at<float>(3, i) * imageHeight;
+                const float cx = det_output.at<float>(0, i);
+                const float cy = det_output.at<float>(1, i);
+                const float ow = det_output.at<float>(2, i);
+                const float oh = det_output.at<float>(3, i);
                 Rect box;
                 // Calculate top-left corner of the bounding box
                 if (imageHeightFactor > imageWidthFactor){

@@ -181,10 +181,10 @@ namespace proc_vision_ros2
             // Check if the confidence score exceeds the threshold
             if (score > conf_threshold) {
                 // Extract bounding box coordinates
-                const float cx = std::max(det_output.at<float>(0, i) * imageWidth,0.0);
-                const float cy = std::max(det_output.at<float>(1, i) * imageHeight,0.0);
-                const float ow = std::max(det_output.at<float>(2, i) * imageWidth,0.0);
-                const float oh = std::max(det_output.at<float>(3, i) * imageHeight,0.0);
+                const float cx = std::max(det_output.at<float>(0, i) * imageWidth,0.0f);
+                const float cy = std::max(det_output.at<float>(1, i) * imageHeight,0.0f);
+                const float ow = std::max(det_output.at<float>(2, i) * imageWidth,0.0f);
+                const float oh = std::max(det_output.at<float>(3, i) * imageHeight,0.0f);
                 Rect box;
                 // Calculate top-left corner of the bounding box
                 box.x = static_cast<int>((cx - 0.5 * ow));

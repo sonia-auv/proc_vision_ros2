@@ -223,11 +223,11 @@ namespace proc_vision_ros2
             result.top_left_x = boxes[idx].x;
             result.top_left_y = boxes[idx].y;
             result.top_right_x = boxes[idx].x;
-            result.top_right_y = boxes[idx].y + boxes[idx].height;
-            result.top_left_x = boxes[idx].x + boxes[idx].width;
+            result.top_right_y = boxes[idx].y + boxes[idx].width;
+            result.top_left_x = boxes[idx].x + boxes[idx].height;
             result.top_left_y = boxes[idx].y;
-            result.bottom_right_x = boxes[idx].x + boxes[idx].width;
-            result.bottom_right_y = boxes[idx].y + boxes[idx].height;
+            result.bottom_right_x = boxes[idx].x + boxes[idx].height;
+            result.bottom_right_y = boxes[idx].y + boxes[idx].width;
             result.frame_id = frameId;
             
             output.detected_object.push_back(result);

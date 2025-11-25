@@ -191,7 +191,7 @@ namespace proc_vision_ros2
 
     void Proc_vision::getAngle(int x1, int y1, int x2, int y2, AngleDetection angle){
         int x10 = (x2-x1)/10;
-        cv::Range rowsLeft(min(max(0,x1),IMAGEWIDTH)+ x10, min(max(0,x1),IMAGEWIDTH)+ x10*2);
+        cv::Range rowsLeft(min(max(0,x1)+ x10,IMAGEWIDTH), min(max(0,x1)+ x10*2,IMAGEWIDTH));
         cv::Range colsLeft(min(max(0,y1),IMAGEHEIGTH), min(max(0,y2),IMAGEHEIGTH));
         cv::Range rowsMid((min(max(0,x1),IMAGEWIDTH) + min(max(0,x2),IMAGEWIDTH))/2 - x10/2, (min(max(0,x2),IMAGEWIDTH)+ min(max(0,x2),IMAGEWIDTH))/2 + x10/2);
         cv::Range colsMid(min(max(0,y1),IMAGEHEIGTH), min(max(0,y2),IMAGEHEIGTH));

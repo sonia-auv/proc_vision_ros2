@@ -181,17 +181,25 @@ namespace proc_vision_ros2
             // Check if the confidence score exceeds the threshold
             if (score > conf_threshold) {
                 // Extract bounding box coordinates
-                const float cx = std::max(det_output.at<float>(0, i) * imageWidth,0.0f);
-                const float cy = std::max(det_output.at<float>(1, i) * imageHeight,0.0f);
-                const float ow = std::max(det_output.at<float>(2, i) * imageWidth,0.0f);
-                const float oh = std::max(det_output.at<float>(3, i) * imageHeight,0.0f);
+                const float cx = det_output.at<float>(0, i) * imageWidth;
+                const float cy = det_output.at<float>(1, i) * imageHeight;
+                const float ow = det_output.at<float>(2, i) * imageWidth;
+                const float oh = det_output.at<float>(3, i) * imageHeight;
                 Rect box;
                 // Calculate top-left corner of the bounding box
-                box.x = static_cast<int>((cx - 0.5 * ow));
-                box.y = static_cast<int>((cy - 0.5 * oh));
-                // Set width and height of the bounding box
-                box.width = static_cast<int>(ow);
-                box.height = static_cast<int>(oh);
+                if (imageHeightFactor > imageWidthFactor){
+                    box.x = static_cast<int>((cx - 0.5 * ow)/ imageWidthFactor);
+                    box.y = static_cast<int>(((cy - 0.5 * oh) - (input_h - imageHeightFactor * imageHeight) / 2) / imageWidthFactor);
+                    // Set width and height of the bounding box
+                    box.width = static_cast<int>(ow / imageWidthFactor);
+                    box.height = static_cast<int>(oh / imageWidthFactor);
+                }else{
+                    box.x = static_cast<int>(((cx - 0.5 * ow) - (input_h - imageWidthFactor * imageWidth) / 2) / imageHeightFactor);
+                    box.y = static_cast<int>((cy - 0.5 * oh) / imageHeightFactor);
+                    // Set width and height of the bounding box
+                    box.width = static_cast<int>(ow / imageHeightFactor);
+                    box.height = static_cast<int>(oh / imageHeightFactor);
+                }
 
                 // Store the bounding box, class ID, and confidence
                 boxes.push_back(box);
@@ -315,8 +323,11 @@ namespace proc_vision_ros2
     {
         frameId = frameID;
 
-        imageHeight = image.rows / input_h;
-        imageWidth = image.cols / input_w;
+        imageHeightFactor = input_h / image.rows;
+        imageWidth = input_w / image.cols;
+
+        imageHeight = image.rows;
+        imageWidth = image.cols;
 
         // Preprocess the frame
         preprocess(image);

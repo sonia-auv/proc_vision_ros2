@@ -189,12 +189,12 @@ namespace proc_vision_ros2
                 // Calculate top-left corner of the bounding box
                 if (imageHeightFactor > imageWidthFactor){
                     box.x = static_cast<int>((cx - 0.5 * ow)/ imageWidthFactor);
-                    box.y = static_cast<int>(((cy - 0.5 * oh) - (input_h - imageHeightFactor * imageHeight) / 2) / imageWidthFactor);
+                    box.y = static_cast<int>(((cy - 0.5 * oh) - (input_h - imageWidthFactor * imageHeight) / 2) / imageWidthFactor);
                     // Set width and height of the bounding box
                     box.width = static_cast<int>(ow / imageWidthFactor);
                     box.height = static_cast<int>(oh / imageWidthFactor);
                 }else{
-                    box.x = static_cast<int>(((cx - 0.5 * ow) - (input_h - imageWidthFactor * imageWidth) / 2) / imageHeightFactor);
+                    box.x = static_cast<int>(((cx - 0.5 * ow) - (input_w - imageHeightFactor * imageWidth) / 2) / imageHeightFactor);
                     box.y = static_cast<int>((cy - 0.5 * oh) / imageHeightFactor);
                     // Set width and height of the bounding box
                     box.width = static_cast<int>(ow / imageHeightFactor);

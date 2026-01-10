@@ -16,7 +16,8 @@ namespace proc_vision_ros2
     class Yolo{
         public:
 
-            Yolo();
+            Yolo(){};
+
             /**
              * @brief Constructor to initialize the YOLOv11 object.
              *
@@ -40,8 +41,6 @@ namespace proc_vision_ros2
              */
             int detect(Mat& image,string frameID,sonia_common_ros2::msg::DetectionArray& output);
 
-            bool getInit(){return _initia;}
-
         private:
             /**
              * @brief Initialize TensorRT components from the given engine file.
@@ -59,6 +58,13 @@ namespace proc_vision_ros2
              * @param image The input image to be preprocessed.
              */
             void preprocess(Mat& image);
+
+            /**
+             * @brief Run inference on the preprocessed image.
+             *
+             * load all parameter of a model.
+             */
+            void loadingParam();
 
             /**
              * @brief Run inference on the preprocessed image.
@@ -111,7 +117,6 @@ namespace proc_vision_ros2
             float nms_threshold = 0.4f; //!< Non-Maximum Suppression (NMS) threshold for filtering overlapping boxes.
 
             string frameId;
-            bool _initia;
 
             YAML::Node _config;
     };

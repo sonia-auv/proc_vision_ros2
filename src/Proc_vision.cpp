@@ -12,9 +12,9 @@ namespace proc_vision_ros2
     Proc_vision::Proc_vision()
         : Node("proc_vision"){
 
-        this->declare_parameter("models", std::vector<string>({"robosub-2025-v2"}));
+        this->declare_parameter("models", std::vector<string>({"test_aquadome_2025"}));
 
-        MODELDIR = (string)std::getenv("SONIA_WS")+"/src/proc_vision/models/";
+        MODELDIR = (string)std::getenv("SONIA_WS")+"/src/proc_vision_ros2/models/";
 
         rclcpp::QoS qosBestEffort(10);
         qosBestEffort.reliability(rclcpp::ReliabilityPolicy::BestEffort).durability(rclcpp::DurabilityPolicy::Volatile).history(rclcpp::HistoryPolicy::KeepLast);
@@ -82,26 +82,29 @@ namespace proc_vision_ros2
             }
 
             if(request.get()->camera_choice == request.get()->FRONT){
-                _cameraBottom =false;
-                _cameraFront =true;
                 _modelFront = new Yolo(MODELDIR+model_name,logger);
                 _modelBottom = NULL;
+                _cameraBottom =false;
+                _cameraFront =true;
             }else if(request.get()->camera_choice == request.get()->BOTTOM){
-                _cameraBottom =true;
-                _cameraFront =false;
                 _modelFront = NULL;
                 _modelBottom = new Yolo(MODELDIR+model_name,logger);
-            }else if(request.get()->camera_choice == request.get()->BOTH) {
                 _cameraBottom =true;
-                _cameraFront =true;
+                _cameraFront =false;
+            }else if(request.get()->camera_choice == request.get()->BOTH) {
                 _modelFront = new Yolo(MODELDIR+model_name,logger);
                 _modelBottom = new Yolo(MODELDIR+model_name,logger);
+                _cameraBottom =true;
+                _cameraFront =true;
             }else{
                 _cameraBottom = false;
                 _cameraFront = false;
                 _modelBottom = NULL;
                 _modelFront = NULL;
+                model_name = "";
             }
+
+            response->model_name = model_name;
         }
         catch(const std::exception& e)
         {

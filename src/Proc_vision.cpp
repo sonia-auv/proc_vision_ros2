@@ -75,7 +75,7 @@ namespace proc_vision_ros2
         try
         {
             string model_name;
-            if(request.get()->model_choice >=0 and request.get()->model_choice <= model_list.size()){
+            if(request.get()->model_choice >=0 and request.get()->model_choice < model_list.size()){
                 model_name = model_list[request.get()->model_choice];
             }else{
                 model_name = model_list[0];
@@ -127,11 +127,10 @@ namespace proc_vision_ros2
     sonia_common_ros2::msg::DetectionArray Proc_vision::imgDetection(const sensor_msgs::msg::Image &msg, Yolo* model){
         try
         {
-	        RCLCPP_INFO(this->get_logger(),  "start");
             actualiseDepth();
             detections.detected_object={};
             auto imageCV2 = cv_bridge::toCvCopy(msg);
-            RCLCPP_INFO_STREAM(this->get_logger(),  "Number detection "<<std::to_string(model->detect(imageCV2->image,imageCV2->header.frame_id,detections)));
+            model->detect(imageCV2->image,imageCV2->header.frame_id,detections);
             if(_cameraFront){
                 for(sonia_common_ros2::msg::Detection detection : detections.detected_object){
                     detection.distance = getDeepHistogram((int)detection.top_left_x,(int)detection.top_left_y,(int)detection.bottom_right_x,(int)detection.bottom_right_y);
@@ -142,7 +141,6 @@ namespace proc_vision_ros2
                     detection.distance_teta = _angle.distance_teta;
                 }
             }
-	        RCLCPP_INFO(this->get_logger(),  "end");
             return detections;
         }
         catch(const std::exception& e)
@@ -191,7 +189,7 @@ namespace proc_vision_ros2
 
     void Proc_vision::getAngle(int x1, int y1, int x2, int y2, AngleDetection angle){
         int x10 = (x2-x1)/10;
-        cv::Range rowsLeft(min(max(0,x1),IMAGEWIDTH)+ x10, min(max(0,x2),IMAGEWIDTH)+ x10*2);
+        cv::Range rowsLeft(min(max(0,x1)+ x10,IMAGEWIDTH), min(max(0,x1)+ x10*2,IMAGEWIDTH));
         cv::Range colsLeft(min(max(0,y1),IMAGEHEIGTH), min(max(0,y2),IMAGEHEIGTH));
         cv::Range rowsMid((min(max(0,x1),IMAGEWIDTH) + min(max(0,x2),IMAGEWIDTH))/2 - x10/2, (min(max(0,x2),IMAGEWIDTH)+ min(max(0,x2),IMAGEWIDTH))/2 + x10/2);
         cv::Range colsMid(min(max(0,y1),IMAGEHEIGTH), min(max(0,y2),IMAGEHEIGTH));

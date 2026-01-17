@@ -19,6 +19,7 @@ class Proc_vision{
     - messageBottomCameraCallBack(msg : sensor_msgs::msg::Image) : void
     - messageBottomCameraCallBack(msg : sensor_msgs::msg::Image , model: Yolo) : sonia_common_ros2::msg::DetectionArray
     - messageZedDepthCallBack(msg : sensor_msgs::msg::Image) : void
+    - imgDetection(const sensor_msgs::msg::Image &msg, Yolo* model) : sonia_common_ros2::msg::DetectionArray
     - actualiseDepth() : void
     - getDeepHistogram(x1 : int,y1 :int,x2 :int,y2 :int) : void
     - getAngle(x1 : int,y1 :int,x2 :int,y2 :int, angle : AngleDetection) : void

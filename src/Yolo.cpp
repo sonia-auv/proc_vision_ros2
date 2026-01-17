@@ -187,11 +187,19 @@ namespace proc_vision_ros2
                 const float oh = det_output.at<float>(3, i);
                 Rect box;
                 // Calculate top-left corner of the bounding box
-                box.x = static_cast<int>((cx - 0.5 * ow));
-                box.y = static_cast<int>((cy - 0.5 * oh));
-                // Set width and height of the bounding box
-                box.width = static_cast<int>(ow);
-                box.height = static_cast<int>(oh);
+                if (imageHeightFactor > imageWidthFactor){
+                    box.x = static_cast<int>((cx - 0.5 * ow)/ imageWidthFactor);
+                    box.y = static_cast<int>(((cy - 0.5 * oh) - (input_h - imageWidthFactor * imageHeight) / 2) / imageWidthFactor);
+                    // Set width and height of the bounding box
+                    box.width = static_cast<int>(ow / imageWidthFactor);
+                    box.height = static_cast<int>(oh / imageWidthFactor);
+                }else{
+                    box.x = static_cast<int>(((cx - 0.5 * ow) - (input_w - imageHeightFactor * imageWidth) / 2) / imageHeightFactor);
+                    box.y = static_cast<int>((cy - 0.5 * oh) / imageHeightFactor);
+                    // Set width and height of the bounding box
+                    box.width = static_cast<int>(ow / imageHeightFactor);
+                    box.height = static_cast<int>(oh / imageHeightFactor);
+                }
 
                 // Store the bounding box, class ID, and confidence
                 boxes.push_back(box);
@@ -314,6 +322,12 @@ namespace proc_vision_ros2
     int Yolo::detect(Mat& image,string frameID, sonia_common_ros2::msg::DetectionArray& output)
     {
         frameId = frameID;
+
+        imageHeightFactor = (float) input_h / image.rows;
+        imageWidthFactor = (float) input_w / image.cols;
+
+        imageHeight = image.rows;
+        imageWidth = image.cols;
 
         // Preprocess the frame
         preprocess(image);

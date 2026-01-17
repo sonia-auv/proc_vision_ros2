@@ -323,8 +323,8 @@ namespace proc_vision_ros2
     {
         frameId = frameID;
 
-        imageHeightFactor = input_h / image.rows;
-        imageWidth = input_w / image.cols;
+        imageHeightFactor = (float) input_h / image.rows;
+        imageWidthFactor = (float) input_w / image.cols;
 
         imageHeight = image.rows;
         imageWidth = image.cols;

@@ -127,11 +127,10 @@ namespace proc_vision_ros2
     sonia_common_ros2::msg::DetectionArray Proc_vision::imgDetection(const sensor_msgs::msg::Image &msg, Yolo* model){
         try
         {
-	        RCLCPP_INFO(this->get_logger(),  "start");
             actualiseDepth();
             detections.detected_object={};
             auto imageCV2 = cv_bridge::toCvCopy(msg);
-            RCLCPP_INFO_STREAM(this->get_logger(),  "Number detection "<<std::to_string(model->detect(imageCV2->image,imageCV2->header.frame_id,detections)));
+            model->detect(imageCV2->image,imageCV2->header.frame_id,detections);
             if(_cameraFront){
                 for(sonia_common_ros2::msg::Detection detection : detections.detected_object){
                     detection.distance = getDeepHistogram((int)detection.top_left_x,(int)detection.top_left_y,(int)detection.bottom_right_x,(int)detection.bottom_right_y);
@@ -142,7 +141,6 @@ namespace proc_vision_ros2
                     detection.distance_teta = _angle.distance_teta;
                 }
             }
-	        RCLCPP_INFO(this->get_logger(),  "end");
             return detections;
         }
         catch(const std::exception& e)

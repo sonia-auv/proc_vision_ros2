@@ -96,24 +96,28 @@ namespace proc_vision_ros2
             if(request.get()->camera_choice == request.get()->FRONT){
                 _modelFront = new Yolo(MODELDIR+model_name,logger);
                 _modelBottom = NULL;
-                _cameraBottom =false;
-                _cameraFront =true;
+                _cameraBottom = false;
+                _cameraFront = true;
+                node_status.state = sonia_common_ros2::msg::NodeStatus::STATE_RUNNING;
             }else if(request.get()->camera_choice == request.get()->BOTTOM){
                 _modelFront = NULL;
                 _modelBottom = new Yolo(MODELDIR+model_name,logger);
-                _cameraBottom =true;
-                _cameraFront =false;
+                _cameraBottom = true;
+                _cameraFront = false;
+                node_status.state = sonia_common_ros2::msg::NodeStatus::STATE_RUNNING;
             }else if(request.get()->camera_choice == request.get()->BOTH) {
                 _modelFront = new Yolo(MODELDIR+model_name,logger);
                 _modelBottom = new Yolo(MODELDIR+model_name,logger);
-                _cameraBottom =true;
-                _cameraFront =true;
+                _cameraBottom = true;
+                _cameraFront = true;
+                node_status.state = sonia_common_ros2::msg::NodeStatus::STATE_RUNNING;
             }else{
                 _cameraBottom = false;
                 _cameraFront = false;
                 _modelBottom = NULL;
                 _modelFront = NULL;
                 model_name = "";
+                node_status.state = sonia_common_ros2::msg::NodeStatus::STATE_IDLE;
             }
 
             response->model_name = model_name;
@@ -153,12 +157,14 @@ namespace proc_vision_ros2
                     detection.distance_teta = _angle.distance_teta;
                 }
             }
+            node_status.quality = sonia_common_ros2::msg::NodeStatus::Q_OK;
             return detections;
         }
         catch(const std::exception& e)
         {
-            RCLCPP_INFO_STREAM(this->get_logger(),  "ERROR when infer on the iamge " << e.what());
+            RCLCPP_INFO_STREAM(this->get_logger(),  "ERROR when infer on the image " << e.what());
             detections.detected_object = {};
+            node_status.quality = sonia_common_ros2::msg::NodeStatus::Q_DEGRADE;
             return detections;
         }
         

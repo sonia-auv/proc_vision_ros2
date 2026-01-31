@@ -37,14 +37,21 @@ namespace proc_vision_ros2
 
         _publisherDetectionArrayBottom =
             this->create_publisher<sonia_common_ros2::msg::DetectionArray>("/proc_vision/bottom/classif", 10);
+
+        _publisherNodeStatus = this->create_publisher<sonia_common_ros2::msg::NodeStatus>("/system_monitor/node_status", 1);
         
         _subscriberZedDepth =
             this->create_subscription<sensor_msgs::msg::Image>("/zed/zed_node/depth/depth_registered", 10, std::bind(&Proc_vision::messageZedDepthCallBack, this, _1));
 
         _aiActivationService = this->create_service<sonia_common_ros2::srv::AiActivationService>(
             "/proc_vision/ai_activation", std::bind(&Proc_vision::processAiActivationRequest, this, _1, _2));
+
+        _timerNodeStatus = this->create_wall_timer(500ms, std::bind(&Proc_vision::publishStatus, this));
         
         int driverVersion;
+        node_status.node_name = this->get_name();
+        node_status.quality = sonia_common_ros2::msg::NodeStatus::Q_OK;
+        node_status.state = sonia_common_ros2::msg::NodeStatus::STATE_IDLE;
 
         // Get the CUDA driver version
         cudaError_t error = cudaDriverGetVersion(&driverVersion);
@@ -66,6 +73,11 @@ namespace proc_vision_ros2
     Proc_vision::~Proc_vision(){
         _modelBottom = NULL;
         _modelFront = NULL;
+    }
+
+    void Proc_vision::publishStatus(){
+        node_status.stamp = this->now();
+        _publisherNodeStatus->publish(node_status);
     }
 
     void Proc_vision::processAiActivationRequest(const std::shared_ptr<sonia_common_ros2::srv::AiActivationService::Request> request,

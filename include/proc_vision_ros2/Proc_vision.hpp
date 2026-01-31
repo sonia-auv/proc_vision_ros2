@@ -11,6 +11,7 @@
 
 #include "sonia_common_ros2/srv/ai_activation_service.hpp"
 #include "sonia_common_ros2/msg/detection_array.hpp"
+#include "sonia_common_ros2/msg/node_status.hpp"
 #include <vector>
 
 namespace proc_vision_ros2
@@ -107,21 +108,29 @@ namespace proc_vision_ros2
          */
         void getAngle(int x1, int y1, int x2, int y2, AngleDetection angle);
 
+        /**
+         * @brief Publishes node information of its state and quality.
+         */
+        void publishStatus();
+
         // all variable to work
 
         rclcpp::Service<sonia_common_ros2::srv::AiActivationService>::SharedPtr _aiActivationService;
 
         rclcpp::Publisher<sonia_common_ros2::msg::DetectionArray>::SharedPtr _publisherDetectionArrayBottom;
         rclcpp::Publisher<sonia_common_ros2::msg::DetectionArray>::SharedPtr _publisherDetectionArrayFront;
+        rclcpp::Publisher<sonia_common_ros2::msg::NodeStatus>::SharedPtr _publisherNodeStatus;
 
         rclcpp::Subscription<sensor_msgs::msg::Image>::SharedPtr _subscriberFrontCamera;
         rclcpp::Subscription<sensor_msgs::msg::Image>::SharedPtr _subscriberFrontCameraSim;
         rclcpp::Subscription<sensor_msgs::msg::Image>::SharedPtr _subscriberBottomCamera;
         rclcpp::Subscription<sensor_msgs::msg::Image>::SharedPtr _subscriberBottomCameraSim;
-
         rclcpp::Subscription<sensor_msgs::msg::Image>::SharedPtr _subscriberZedDepth;
 
+        rclcpp::TimerBase::SharedPtr _timerNodeStatus;
+
         sonia_common_ros2::msg::DetectionArray detections;
+        sonia_common_ros2::msg::NodeStatus node_status;
 
         bool _cameraFront = false;
         bool _cameraBottom = false;

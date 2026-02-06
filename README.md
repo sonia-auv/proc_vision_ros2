@@ -53,6 +53,7 @@ The project use a model of IA to infer on image from the camera. It's use Yolo f
 | Topic                            | `/proc_simulation/bottom`                  | Subscribed            | `sensor_msgs/msg/Image`                       | Image from the simulation for the bottom cam  |
 | Topic                            | `/proc_vision/front/classif`               | Published             | `sonia_common_ros2/msg/Image`                 | Detection for the front image                 |
 | Topic                            | `/proc_vision/bottom/classif`              | Published             | `sonia_common_ros2/msg/Image`                 | Detection for the bottom image                |
+| Topic                            | `/system_monitor/node_status`              | Published             | `sonia_common_ros2/msg/NodeStatus`                 | Message contains information of the state of a node               |
 | Service                          | `/proc_vision/ai_activation`               | Service Server        | `sonia_common_ros2/srv/AiActivationService`   | Select the models and cam to use              |
 
 ---

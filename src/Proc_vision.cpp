@@ -146,7 +146,14 @@ namespace proc_vision_ros2
             actualiseDepth();
             detections.detected_object={};
             auto imageCV2 = cv_bridge::toCvCopy(msg);
-            model->detect(imageCV2->image,imageCV2->header.frame_id,detections);
+            if(imageCV2.type()== cv::CV8UC4){
+                // for zed, it's in bgra8
+                cv::Mat bgr_image;
+                cv::cvtColor(imageCV2->image,bgr_image, cv::COLOR_BGRA2BGR);
+                model->detect(bgr_image,imageCV2->header.frame_id,detections);
+            }else{
+                model->detect(imageCV2->image,imageCV2->header.frame_id,detections);
+            }
             if(_cameraFront){
                 for(sonia_common_ros2::msg::Detection detection : detections.detected_object){
                     detection.distance = getDeepHistogram((int)detection.top_left_x,(int)detection.top_left_y,(int)detection.bottom_right_x,(int)detection.bottom_right_y);

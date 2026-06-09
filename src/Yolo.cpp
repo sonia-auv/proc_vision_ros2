@@ -17,7 +17,7 @@ namespace proc_vision_ros2
     #define isFP16 true
 
     // Define whether to perform model warmup
-    #define warmup false
+    #define warmup true
 
     // Constructor for the Yolo class
     Yolo::Yolo(string model_path, nvinfer1::ILogger& logger)
@@ -223,9 +223,9 @@ namespace proc_vision_ros2
             result.top_left_x = boxes[idx].x;
             result.top_left_y = boxes[idx].y;
             result.top_right_x = boxes[idx].x;
-            result.top_right_y = boxes[idx].y + boxes[idx].height;
-            result.top_left_x = boxes[idx].x + boxes[idx].width;
-            result.top_left_y = boxes[idx].y;
+            result.top_right_y = boxes[idx].y + boxes[idx].width;
+            result.bottom_left_x = boxes[idx].x ;
+            result.bottom_left_y = boxes[idx].y + boxes[idx].height;
             result.bottom_right_x = boxes[idx].x + boxes[idx].width;
             result.bottom_right_y = boxes[idx].y + boxes[idx].height;
             result.frame_id = frameId;

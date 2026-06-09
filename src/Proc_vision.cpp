@@ -146,7 +146,7 @@ namespace proc_vision_ros2
             actualiseDepth();
             detections.detected_object={};
             auto imageCV2 = cv_bridge::toCvCopy(msg);
-            if(imageCV2.type()== cv::CV8UC4){
+            if(imageCV2->image.type()== CV_8UC4){
                 // for zed, it's in bgra8
                 cv::Mat bgr_image;
                 cv::cvtColor(imageCV2->image,bgr_image, cv::COLOR_BGRA2BGR);
@@ -155,14 +155,14 @@ namespace proc_vision_ros2
                 model->detect(imageCV2->image,imageCV2->header.frame_id,detections);
             }
             if(_cameraFront){
-                for(sonia_common_ros2::msg::Detection detection : detections.detected_object){
-                    detection.distance = getDeepHistogram((int)detection.top_left_x,(int)detection.top_left_y,(int)detection.bottom_right_x,(int)detection.bottom_right_y);
-                    getAngle((int)detection.top_left_x,(int)detection.top_left_y,(int)detection.bottom_right_x,(int)detection.bottom_right_y, _angle);
-                    detection.angle_alpha = _angle.angle_alpha;
-                    detection.distance_beta = _angle.distance_beta;
-                    detection.angle_teta = _angle.angle_teta;
-                    detection.distance_teta = _angle.distance_teta;
-                }
+                // for(sonia_common_ros2::msg::Detection detection : detections.detected_object){
+                //     detection.distance = getDeepHistogram((int)detection.top_left_x,(int)detection.top_left_y,(int)detection.bottom_right_x,(int)detection.bottom_right_y);
+                //     getAngle((int)detection.top_left_x,(int)detection.top_left_y,(int)detection.bottom_right_x,(int)detection.bottom_right_y, _angle);
+                //     detection.angle_alpha = _angle.angle_alpha;
+                //     detection.distance_beta = _angle.distance_beta;
+                //     detection.angle_teta = _angle.angle_teta;
+                //     detection.distance_teta = _angle.distance_teta;
+                // }
             }
             node_status.quality = sonia_common_ros2::msg::NodeStatus::Q_OK;
             return detections;

@@ -6,126 +6,70 @@
 static uint8_t* img_buffer_host = nullptr;    // Pinned memory on the host for faster transfers
 static uint8_t* img_buffer_device = nullptr;  // Memory on the device (GPU)
 
-// Structure to represent a 2x3 affine transformation matrix
-struct AffineMatrix {
-    float value[6]; // [m00, m01, m02, m10, m11, m12]
-};
-
 // CUDA kernel to perform affine warp on the image
-__global__ void warpaffine_kernel(
-    uint8_t* src,           // Source image on device
-    int src_line_size,      // Number of bytes per source image row
-    int src_width,          // Source image width
-    int src_height,         // Source image height
-    float* dst,             // Destination image on device (output)
-    int dst_width,          // Destination image width
-    int dst_height,         // Destination image height
-    uint8_t const_value_st, // Constant value for out-of-bound pixels
-    AffineMatrix d2s,       // Affine transformation matrix (destination to source)
-    int edge                // Total number of pixels to process
+__global__ void letterboxNormalizeKernel(
+    const uint8_t* __restrict__ src,   // HWC BGR source image (device)
+    float*         __restrict__ dst,   // NCHW RGB float output
+    int srcW, int srcH,                // source dimensions
+    int dstW, int dstH,                // destination (letterbox) dimensions
+    int newW, int newH,                // resized source dimensions
+    int padLeft, int padTop,           // padding offsets
+    float normScale,                   // 1/255
+    float padValue                     // normalised pad colour (114/255)
 ) {
-    // Calculate the global position of the thread
-    int position = blockDim.x * blockIdx.x + threadIdx.x;
-    if (position >= edge) return; // Exit if position exceeds total pixels
+    const int x = blockIdx.x * blockDim.x + threadIdx.x; // dst column
+    const int y = blockIdx.y * blockDim.y + threadIdx.y; // dst row
 
-    // Extract affine matrix elements
-    float m_x1 = d2s.value[0];
-    float m_y1 = d2s.value[1];
-    float m_z1 = d2s.value[2];
-    float m_x2 = d2s.value[3];
-    float m_y2 = d2s.value[4];
-    float m_z2 = d2s.value[5];
+    if (x >= dstW || y >= dstH) return;
 
-    // Calculate destination pixel coordinates
-    int dx = position % dst_width;
-    int dy = position / dst_width;
+    const int planeSize = dstH * dstW;
+    const int idx = y * dstW + x;
 
-    // Apply affine transformation to get source coordinates
-    float src_x = m_x1 * dx + m_y1 * dy + m_z1 + 0.5f;
-    float src_y = m_x2 * dx + m_y2 * dy + m_z2 + 0.5f;
+    // Check if this pixel is inside the resized source region
+    const int srcX = x - padLeft;
+    const int srcY = y - padTop;
 
-    float c0, c1, c2; // Color channels (B, G, R)
+    if (srcX >= 0 && srcX < newW && srcY >= 0 && srcY < newH) {
+        // Bilinear coordinate mapping back to original source
+        // src coords (float) for bilinear interpolation
+        const float fx = static_cast<float>(srcX) * srcW / static_cast<float>(newW);
+        const float fy = static_cast<float>(srcY) * srcH / static_cast<float>(newH);
 
-    // Check if the source coordinates are out of bounds
-    if (src_x <= -1 || src_x >= src_width || src_y <= -1 || src_y >= src_height) {
-        // Assign constant value if out of range
-        c0 = const_value_st;
-        c1 = const_value_st;
-        c2 = const_value_st;
-    }
-    else {
-        // Perform bilinear interpolation
+        const int x0 = static_cast<int>(fx);
+        const int y0 = static_cast<int>(fy);
+        const int x1 = min(x0 + 1, srcW - 1);
+        const int y1 = min(y0 + 1, srcH - 1);
 
-        // Get the integer parts of the source coordinates
-        int y_low = floorf(src_y);
-        int x_low = floorf(src_x);
-        int y_high = y_low + 1;
-        int x_high = x_low + 1;
+        const float ax = fx - x0;
+        const float ay = fy - y0;
 
-        // Initialize constant values for out-of-bound pixels
-        uint8_t const_value[] = { const_value_st, const_value_st, const_value_st };
+        // Read 4 corners (BGR, HWC layout)
+        const int stride = srcW * 3;
+        const uint8_t* p00 = src + y0 * stride + x0 * 3;
+        const uint8_t* p01 = src + y0 * stride + x1 * 3;
+        const uint8_t* p10 = src + y1 * stride + x0 * 3;
+        const uint8_t* p11 = src + y1 * stride + x1 * 3;
 
-        // Calculate the fractional parts
-        float ly = src_y - y_low;
-        float lx = src_x - x_low;
-        float hy = 1 - ly;
-        float hx = 1 - lx;
+        // Bilinear interpolation per channel, BGR→RGB + normalize
+        #pragma unroll
+        for (int c = 0; c < 3; ++c) {
+            // BGR channel index: 0=B, 1=G, 2=R
+            // RGB output plane:  0=R, 1=G, 2=B  →  mapping: out_c = 2-c
+            const int srcC = 2 - c; // BGR→RGB swap
 
-        // Compute the weights for the four surrounding pixels
-        float w1 = hy * hx; // Top-left
-        float w2 = hy * lx; // Top-right
-        float w3 = ly * hx; // Bottom-left
-        float w4 = ly * lx; // Bottom-right
+            float val = (1.0f - ax) * (1.0f - ay) * p00[srcC]
+                      + ax          * (1.0f - ay) * p01[srcC]
+                      + (1.0f - ax) * ay          * p10[srcC]
+                      + ax          * ay          * p11[srcC];
 
-        // Initialize pointers to the four surrounding pixels
-        uint8_t* v1 = const_value;
-        uint8_t* v2 = const_value;
-        uint8_t* v3 = const_value;
-        uint8_t* v4 = const_value;
-
-        // Top-left pixel
-        if (y_low >= 0) {
-            if (x_low >= 0)
-                v1 = src + y_low * src_line_size + x_low * 3;
-            // Top-right pixel
-            if (x_high < src_width)
-                v2 = src + y_low * src_line_size + x_high * 3;
+            dst[c * planeSize + idx] = val * normScale;
         }
-
-        // Bottom-left and Bottom-right pixels
-        if (y_high < src_height) {
-            if (x_low >= 0)
-                v3 = src + y_high * src_line_size + x_low * 3;
-            if (x_high < src_width)
-                v4 = src + y_high * src_line_size + x_high * 3;
-        }
-
-        // Perform bilinear interpolation for each color channel
-        c0 = w1 * v1[0] + w2 * v2[0] + w3 * v3[0] + w4 * v4[0]; // Blue
-        c1 = w1 * v1[1] + w2 * v2[1] + w3 * v3[1] + w4 * v4[1]; // Green
-        c2 = w1 * v1[2] + w2 * v2[2] + w3 * v3[2] + w4 * v4[2]; // Red
+    } else {
+        // Padding pixel
+        dst[0 * planeSize + idx] = padValue; // R
+        dst[1 * planeSize + idx] = padValue; // G
+        dst[2 * planeSize + idx] = padValue; // B
     }
-
-    // Convert from BGR to RGB by swapping channels
-    float t = c2;
-    c2 = c0;
-    c0 = t;
-
-    // Normalize the color values to [0, 1]
-    c0 = c0 / 255.0f;
-    c1 = c1 / 255.0f;
-    c2 = c2 / 255.0f;
-
-    // Rearrange the output format from interleaved RGB to separate channels
-    int area = dst_width * dst_height;
-    float* pdst_c0 = dst + dy * dst_width + dx;        // Red channel
-    float* pdst_c1 = pdst_c0 + area;                   // Green channel
-    float* pdst_c2 = pdst_c1 + area;                   // Blue channel
-
-    // Assign the normalized color values to the destination buffers
-    *pdst_c0 = c0;
-    *pdst_c1 = c1;
-    *pdst_c2 = c2;
 }
 
 // Host function to perform CUDA-based preprocessing
@@ -153,32 +97,22 @@ void cuda_preprocess(
         stream
     ));
 
-    // Define affine transformation matrices
-    AffineMatrix s2d, d2s; // Source to destination and vice versa
-
-    // Calculate the scaling factor to maintain aspect ratio
-    float scale = std::min(
-        dst_height / (float)src_height,
-        dst_width / (float)src_width
+    // Compute resize dimensions (maintain aspect ratio)
+    const float scale = fminf(
+        static_cast<float>(dst_height) / src_height,
+        static_cast<float>(dst_width) / src_width
     );
+    const int newW = static_cast<int>(roundf(src_width * scale));
+    const int newH = static_cast<int>(roundf(src_height * scale));
 
-    // Initialize source-to-destination affine matrix (s2d)
-    s2d.value[0] = scale;                  // m00
-    s2d.value[1] = 0;                      // m01
-    s2d.value[2] = -scale * src_width * 0.5f + dst_width * 0.5f; // m02
-    s2d.value[3] = 0;                      // m10
-    s2d.value[4] = scale;                  // m11
-    s2d.value[5] = -scale * src_height * 0.5f + dst_height * 0.5f; // m12
+    // Ultralytics-compatible asymmetric padding
+    const float dw = (dst_width - newW) / 2.0f;
+    const float dh = (dst_height - newH) / 2.0f;
+    const int padLeft = static_cast<int>(roundf(dw - 0.1f));
+    const int padTop  = static_cast<int>(roundf(dh - 0.1f));
 
-    // Create OpenCV matrices for affine transformation
-    cv::Mat m2x3_s2d(2, 3, CV_32F, s2d.value);
-    cv::Mat m2x3_d2s(2, 3, CV_32F, d2s.value);
-
-    // Invert the source-to-destination matrix to get destination-to-source
-    cv::invertAffineTransform(m2x3_s2d, m2x3_d2s);
-
-    // Copy the inverted matrix back to d2s
-    memcpy(d2s.value, m2x3_d2s.ptr<float>(0), sizeof(d2s.value));
+    constexpr float normScale = 1.0f / 255.0f;
+    constexpr float padValue  = 114.0f / 255.0f;
 
     // Calculate the total number of pixels to process
     int jobs = dst_height * dst_width;
@@ -188,20 +122,13 @@ void cuda_preprocess(
 
     // Calculate the number of blocks needed
     int blocks = ceil(jobs / (float)threads);
-
-    // Launch the warp affine kernel
-    warpaffine_kernel<<< blocks, threads, 0, stream >>>(
-        img_buffer_device,           // Source image on device
-        src_width * 3,               // Source line size (bytes per row)
-        src_width,                   // Source width
-        src_height,                  // Source height
-        dst,                         // Destination buffer on device
-        dst_width,                   // Destination width
-        dst_height,                  // Destination height
-        128,                         // Constant value for out-of-bounds (gray)
-        d2s,                         // Destination to source affine matrix
-        jobs                         // Total number of pixels
-        );
+    
+    letterboxNormalizeKernel<<< blocks, threads, 0, stream >>>(
+        src, dst,
+        src_width, src_height, dst_width, dst_height,
+        newW, newH, padLeft, padTop,
+        normScale, padValue
+    );
 
     // Optionally, you might want to check for kernel launch errors
     CUDA_CHECK(cudaGetLastError());

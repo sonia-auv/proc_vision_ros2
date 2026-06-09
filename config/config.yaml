@@ -2,6 +2,7 @@
   ros__parameters:
 
     models: [
+      "IA2026Aquadome_2i",
       "test_aquadome_2025",
       "yolo11l",
       "yolo11m",

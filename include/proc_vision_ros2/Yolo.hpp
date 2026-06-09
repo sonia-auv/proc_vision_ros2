@@ -112,9 +112,9 @@ namespace proc_vision_ros2
             int num_detections; //!< Number of detections output by the model.
             int detection_attribute_size; //!< Size of each detection attribute.
             int num_classes = 22; //!< Number of object classes that can be detected.
-            const int MAX_IMAGE_SIZE = 2208 * 1242; //!< Maximum allowed input image size.
+            const int MAX_IMAGE_SIZE = 2208 * 2208; //!< Maximum allowed input image size.
             float conf_threshold = 0.3f; //!< Confidence threshold for filtering detections.
-            float nms_threshold = 0.4f; //!< Non-Maximum Suppression (NMS) threshold for filtering overlapping boxes.
+            float nms_threshold = 0.2f; //!< Non-Maximum Suppression (NMS) threshold for filtering overlapping boxes.
 
             float imageHeightFactor; //!< Image Height factor
             float imageWidthFactor; //!< Image Width factor

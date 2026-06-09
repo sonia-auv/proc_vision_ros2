@@ -139,6 +139,16 @@ namespace proc_vision_ros2
         cuda_preprocess(image.ptr(), image.cols, image.rows, gpu_buffers[0], input_w, input_h, stream);
         // Synchronize the CUDA stream to ensure preprocessing is complete
         CUDA_CHECK(cudaStreamSynchronize(stream));
+
+        // Uncomment to exctrat what see the camera it<s output on bgr put tag as rgb
+        // cv::cuda::Stream cv_stream = cv::cuda::StreamAccessor::wrapStream(stream);
+
+        // cv::cuda::GpuMat gpu_mat(input_h,input_w,CV_8UC3,gpu_buffers[0]);
+        // cv::Mat cpu_mat;
+        // gpu_mat.download(cpu_mat,cv_stream);
+        // cv_stream.waitForCompletion();
+
+        // cv::imwrite("/home/sonia/ssd/ImageGPU.png", cpu_mat * 255.0);
     }
 
     // Perform inference using the TensorRT execution context

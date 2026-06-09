@@ -5,6 +5,9 @@
 
 #include "NvInfer.h"
 #include <opencv2/opencv.hpp>
+#include <opencv2/core/cuda.hpp>
+#include <cuda_runtime.h>
+#include <opencv2/core/cuda_stream_accessor.hpp>
 
 using namespace nvinfer1;
 using namespace std;

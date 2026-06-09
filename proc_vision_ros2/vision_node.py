@@ -53,8 +53,8 @@ class VisionNode(Node):
 
         model_front_name = self.get_parameter("models").get_parameter_value().string_array_value[0]
         model_bottom_name = self.get_parameter("models").get_parameter_value().string_array_value[0]
-        self.model_front = YOLOv8(os.path.join(MODEL_DIR, model_front_name), self)
-        self.model_bottom = YOLOv8(os.path.join(MODEL_DIR, model_bottom_name), self)
+        self.model_front = None
+        self.model_bottom = None
         self.__classif_front_pub = self.create_publisher(DetectionArray, "proc_vision/front/classif", 10)
         self.__classif_bottom_pub = self.create_publisher(DetectionArray, "proc_vision/bottom/classif", 10)
 
@@ -69,7 +69,6 @@ class VisionNode(Node):
             if not os.path.exists(OUTPUT_DIR):
                 os.makedirs(OUTPUT_DIR)
         self.get_logger().info("Vision node initialized")
-        self.get_logger().info(f"Available providers: {self.model_front.available_providers()}")
 
 
     def __ai_activation_callback(self, request, response):

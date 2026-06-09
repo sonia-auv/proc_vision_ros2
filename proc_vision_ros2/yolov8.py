@@ -58,8 +58,9 @@ class YOLOv8:
         # Generate a color palette for the classes
         self.color_palette = np.random.uniform(0, 255, size=(len(self.classes), 3))
 
+        options = ort.SessionOptions()
         # Create an inference session using the ONNX model and specify execution providers
-        self.session = ort.InferenceSession(self.onnx_model, providers=["TensorrtExecutionProvider"])#, "CPUExecutionProvider"])
+        self.session = ort.InferenceSession(self.onnx_model, providers=["TensorrtExecutionProvider", "CUDAExecutionProvider"])#, "CPUExecutionProvider"])
 
         # Get the model inputs
         model_inputs = self.session.get_inputs()

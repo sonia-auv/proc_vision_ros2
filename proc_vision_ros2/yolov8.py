@@ -3,9 +3,6 @@ import cv2
 import yaml
 import numpy as np
 import onnxruntime as ort
-import tensorrt as trt
-import pycuda.driver as cuda
-import pycuda.autoinit
 from sonia_common_ros2.msg import Detection, DetectionArray
 
 
@@ -30,7 +27,6 @@ class YOLOv8:
 
     Methods:
         letterbox: Resize and reshape images while maintaining aspect ratio by adding padding.
-        draw_detections: Draw bounding boxes and labels on the input image based on detected objects.
         preprocess: Preprocess the input image before performing inference.
         postprocess: Perform post-processing on the model's output to extract and visualize detections.
         main: Perform inference using an ONNX model and return the output image with drawn detections.
@@ -49,7 +45,7 @@ class YOLOv8:
             onnx_model (str): Path to the ONNX model.
             confidence_thres (float): Confidence threshold for filtering detections.
         """
-        self.engigne = onnx_model+"/testengigne2.trt"
+        self.onnx_model = onnx_model+"/model.onnx"
         self.input_image = None
         self.draw = False
         self.confidence_thres = confidence_thres
@@ -62,32 +58,17 @@ class YOLOv8:
         # Generate a color palette for the classes
         self.color_palette = np.random.uniform(0, 255, size=(len(self.classes), 3))
 
-        # Create an inference session using the Tensorrt model and specify execution providers
-        
-        self.logger = trt.Logger(trt.Logger.WARNING)
-        self.runtime = trt.Runtime(self.logger)
-        with open(self.engigne, "rb") as f:
-            model_data = f.read()
-        self.engine = self.runtime.deserialize_cuda_engine(model_data)
+        # Create an inference session using the ONNX model and specify execution providers
+        self.session = ort.InferenceSession(self.onnx_model, providers=["TensorrtExecutionProvider"])#, "CPUExecutionProvider"])
 
-        self.context = self.engine.create_execution_context()
-
-        for binding in self.engine:
-            if self.engine.binding_is_input(binding):  # we expect only one input
-                self.input_shape = self.engine.get_binding_shape(binding)
-                self.input_size = trt.volume(self.input_shape) * self.engine.max_batch_size * np.dtype(np.float32).itemsize  # in bytes
-                self.device_input = cuda.mem_alloc(self.input_size)
-            else:  # and one output
-                self.output_shape = self.engine.get_binding_shape(binding)
-                # create page-locked memory buffers (i.e. won't be swapped to disk)
-                self.host_output = cuda.pagelocked_empty(trt.volume(self.output_shape) * self.engine.max_batch_size, dtype=np.float32)
-                self.device_output = cuda.mem_alloc(self.host_output.nbytes)
-        
-        self.stream = cuda.Stream()
+        # Get the model inputs
+        model_inputs = self.session.get_inputs()
+        self.model_name = model_inputs[0].name
 
         # Store the shape of the input for later use
-        self.input_width = self.input_shape[2]
-        self.input_height = self.input_shape[3]
+        input_shape = model_inputs[0].shape
+        self.input_width = input_shape[2]
+        self.input_height = input_shape[3]
 
     def preprocess_image(self, img):
         ycrcb_img = cv2.cvtColor(np.array(img), cv2.COLOR_BGR2YCrCb)
@@ -125,35 +106,6 @@ class YOLOv8:
 
         return img, (top, left)
 
-    def draw_detections(self, img: np.ndarray, box: List[float], score: float, class_id: int) -> None:
-        """Draw bounding boxes and labels on the input image based on the detected objects."""
-        # Extract the coordinates of the bounding box
-        x1, y1, w, h = box
-
-        # Retrieve the color for the class ID
-        color = self.color_palette[class_id]
-
-        # Draw the bounding box on the image
-        img = cv2.rectangle(img, (int(x1), int(y1)), (int(x1 + w), int(y1 + h)), color, 2)
-
-        # Create the label text with class name and score
-        label = f"{self.classes[class_id]}: {score:.2f}"
-
-        # Calculate the dimensions of the label text
-        (label_width, label_height), _ = cv2.getTextSize(label, cv2.FONT_HERSHEY_SIMPLEX, 0.5, 1)
-
-        # Calculate the position of the label text
-        label_x = x1
-        label_y = y1 - 10 if y1 - 10 > label_height else y1 + 10
-
-        # Draw a filled rectangle as the background for the label text
-        img = cv2.rectangle(
-            img, (label_x, label_y - label_height), (label_x + label_width, label_y + label_height), color, cv2.FILLED
-        )
-
-        # Draw the label text on the image
-        return cv2.putText(img, label, (label_x, label_y), cv2.FONT_HERSHEY_SIMPLEX, 0.5, (0, 0, 0), 1, cv2.LINE_AA)
-
     def preprocess(self) -> Tuple[np.ndarray, Tuple[int, int]]:
         """
         Preprocess the input image before performing inference.
@@ -173,7 +125,7 @@ class YOLOv8:
         # Needed by Yolo to working
         img = cv2.cvtColor(self.input_image, cv2.COLOR_BGR2RGB)
 
-        #img = self.preprocess_image(img)
+        img = self.preprocess_image(self.input_image)
 
         img, pad = self.letterbox(img, (self.input_width, self.input_height))
 
@@ -189,7 +141,7 @@ class YOLOv8:
 
         return image_data, pad
 
-    def postprocess(self, input_image: np.ndarray, outputs: List[np.ndarray], pad: Tuple[int, int]) -> DetectionArray:
+    def postprocess(self, input_image: np.ndarray, output: List[np.ndarray], pad: Tuple[int, int]) -> DetectionArray:
         """
         Perform post-processing on the model's output to extract and visualize detections.
 
@@ -204,6 +156,9 @@ class YOLOv8:
         Returns:
             (np.ndarray): The input image with detections drawn on it.
         """
+        # Transpose and squeeze the output to match the expected shape
+        outputs = np.transpose(np.squeeze(output[0]))
+
         # Lists to store the bounding boxes, scores, and class IDs of the detections
         boxes = []
         scores = []
@@ -211,8 +166,8 @@ class YOLOv8:
 
         # Calculate the scaling factors for the bounding box coordinates
         gain = min(self.input_height / self.img_height, self.input_width / self.img_width)
-        outputs[:,0] -= pad[1]
-        outputs[:,1] -= pad[0]
+        outputs[:, 0] -= pad[1]
+        outputs[:, 1] -= pad[0]
         
         # Iterate over each row in the outputs array
         size = outputs[0:outputs.shape[0], 4:]
@@ -240,10 +195,10 @@ class YOLOv8:
 
         detections = DetectionArray()
         detections.detected_object = []
-
+        
         # Iterate over the selected indices after non-maximum suppression
         for i_array in indices:
-            i = i_array[0]
+            i = i_array
             classif = Detection()
             classif.top_left_x = float(boxes[i][0])
             classif.top_left_y = float(boxes[i][1])
@@ -263,13 +218,6 @@ class YOLOv8:
             classif.angle_teta = float(0)
             classif.distance_teta = float(0)
             detections.detected_object.append(classif)
-            
-            if self.draw:
-                # Get the box, score, and class ID corresponding to the index
-                score = scores[i]
-                class_id = class_ids[i]
-                # Draw the detection on the input image
-                self.draw_detections(input_image, boxes[i], score, class_id)
 
         # Return the results
         return detections
@@ -288,16 +236,9 @@ class YOLOv8:
         img_data, pad = self.preprocess()
 
         # Run inference using the preprocessed image data
-        self.host_input = np.array(img_data, dtype=np.float32, order='C')
-        cuda.memcpy_htod_async(self.device_input, self.host_input, self.stream)
-        self.stream.synchronize()
-
-        self.context.execute_async(bindings=[int(self.device_input), int(self.device_output)], stream_handle=self.stream.handle)
-        cuda.memcpy_dtoh_async(self.host_output, self.device_output, self.stream)
-        self.stream.synchronize()
-        
+        outputs = self.session.run(None, {self.model_name: img_data})
         # Perform post-processing on the outputs to obtain output image
-        return self.postprocess(self.input_image, np.array(self.host_output).reshape(22,7581).T, pad)
+        return self.postprocess(self.input_image, outputs, pad)
 
     def available_providers(self) -> List[str]:
         return ort.get_available_providers()

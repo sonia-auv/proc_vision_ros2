@@ -45,7 +45,7 @@ class VisionNode(Node):
         self.declare_parameter("models", Parameter.Type.STRING_ARRAY) 
         self.__ai_activation_sub = self.create_service(AiActivationService, "proc_vision/ai_activation", self.__ai_activation_callback)
 
-        self.__front_cam_sub = self.create_subscription(Image, "zed/zed_node/left/image_rect_color", self.__img_front_callback, 10)
+        self.__front_cam_sub = self.create_subscription(Image, "zed/zed_node/rgb/image_rect_color", self.__img_front_callback, 10)
         self.__front_cam_sim = self.create_subscription(Image, "proc_simulation/front", self.__img_front_callback, 10)
         
         self.__bottom_cam_sub = self.create_subscription(Image, "camera_array/bottom/image_raw", self.__img_bottom_callback, qos)
@@ -118,11 +118,15 @@ class VisionNode(Node):
 
     def __img_detection(self, msg: Image, model: YOLOv8) -> DetectionArray:
         try:
-            self.actualise_deep()
+
+            self.get_logger().info(f"1")
+            # self.actualise_deep()
             detections = model.detect(self.br.imgmsg_to_cv2(msg), msg.header.frame_id)
+            self.get_logger().info(f"2")
             if(self.camera_front):
                 #get the depth for each element see by the front camera
                 for detect in detections.detected_object:
+                    self.get_logger().info(f"3")
                     detect.distance = self.get_deep_istogram(int(detect.top_left_x), int(detect.bottom_right_x), int(detect.top_left_y) ,int(detect.bottom_right_y))
                     if(detect.class_name == "torpedo-poster" or detect.class_name == "gate-shark" or detect.class_name == "gate-sawfish" or detect.class_name == "shark" or detect.class_name == "sawfish"):
                         angle_alpha,ditance_beta,angle_teta,distance_teta = self.get_angle(int(detect.top_left_x), int(detect.bottom_right_x), int(detect.top_left_y) ,int(detect.bottom_right_y))

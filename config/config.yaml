@@ -2,6 +2,7 @@
   ros__parameters:
 
     models: [
+      "IA2026Aquadome_2i",
       "robosub-2025-v2",
       "robosub-2025-v1",
       "robosub-2025-v0",

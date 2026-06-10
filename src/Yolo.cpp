@@ -232,9 +232,9 @@ namespace proc_vision_ros2
             result.confidence = confidences[idx];
             result.top_left_x = boxes[idx].x;
             result.top_left_y = boxes[idx].y;
-            result.top_right_x = boxes[idx].x;
-            result.top_right_y = boxes[idx].y + boxes[idx].width;
-            result.bottom_left_x = boxes[idx].x ;
+            result.top_right_x = boxes[idx].x+ boxes[idx].width;
+            result.top_right_y = boxes[idx].y;
+            result.bottom_left_x = boxes[idx].x;
             result.bottom_left_y = boxes[idx].y + boxes[idx].height;
             result.bottom_right_x = boxes[idx].x + boxes[idx].width;
             result.bottom_right_y = boxes[idx].y + boxes[idx].height;

@@ -106,7 +106,7 @@ namespace proc_vision_ros2
          * @param y2 coordinate in y for the bottom right point
          * @param angle the variable to return result
          */
-        void getAngle(int x1, int y1, int x2, int y2, AngleDetection angle);
+        void getAngle(int x1, int y1, int x2, int y2, AngleDetection& angle);
 
         /**
          * @brief Publishes node information of its state and quality.

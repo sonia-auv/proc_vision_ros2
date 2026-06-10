@@ -144,6 +144,7 @@ namespace proc_vision_ros2
         try
         {
             actualiseDepth();
+            cv::imwrite("/home/sonia/ssd/ImageDEPTH.png", _actualDepth);
             detections.detected_object={};
             auto imageCV2 = cv_bridge::toCvCopy(msg);
             if(imageCV2->image.type()== CV_8UC4){
@@ -155,14 +156,14 @@ namespace proc_vision_ros2
                 model->detect(imageCV2->image,imageCV2->header.frame_id,detections);
             }
             if(_cameraFront){
-                // for(sonia_common_ros2::msg::Detection detection : detections.detected_object){
-                //     detection.distance = getDeepHistogram((int)detection.top_left_x,(int)detection.top_left_y,(int)detection.bottom_right_x,(int)detection.bottom_right_y);
-                //     getAngle((int)detection.top_left_x,(int)detection.top_left_y,(int)detection.bottom_right_x,(int)detection.bottom_right_y, _angle);
-                //     detection.angle_alpha = _angle.angle_alpha;
-                //     detection.distance_beta = _angle.distance_beta;
-                //     detection.angle_teta = _angle.angle_teta;
-                //     detection.distance_teta = _angle.distance_teta;
-                // }
+                for(sonia_common_ros2::msg::Detection& detection : detections.detected_object){
+                    detection.distance = getDeepHistogram((int)detection.top_left_x,(int)detection.top_left_y,(int)detection.bottom_right_x,(int)detection.bottom_right_y);
+                    getAngle((int)detection.top_left_x,(int)detection.top_left_y,(int)detection.bottom_right_x,(int)detection.bottom_right_y, _angle);
+                    detection.angle_alpha = _angle.angle_alpha;
+                    detection.distance_beta = _angle.distance_beta;
+                    detection.angle_teta = _angle.angle_teta;
+                    detection.distance_teta = _angle.distance_teta;
+                }
             }
             node_status.quality = sonia_common_ros2::msg::NodeStatus::Q_OK;
             return detections;
@@ -194,12 +195,12 @@ namespace proc_vision_ros2
     }
 
     float Proc_vision::getDeepHistogram(int x1, int y1, int x2, int y2){
-        cv::Range rows(min(max(0,x1),IMAGEWIDTH), min(max(0,x2),IMAGEWIDTH));
-        cv::Range cols(min(max(0,y1),IMAGEHEIGTH), min(max(0,y2),IMAGEHEIGTH));
+        cv::Range cols(min(max(0,x1),IMAGEWIDTH), min(max(0,x2),IMAGEWIDTH));
+        cv::Range rows(min(max(0,y1),IMAGEHEIGTH), min(max(0,y2),IMAGEHEIGTH));
         Mat subMatrice = _actualDepth(rows,cols);
         cv::Mat hist;
-        int histSize[] = {6553};
-        float range[] = {0, 65530};
+        int histSize[] = {2500};
+        float range[] = {0, 25000};
         const float* ranges[] = {range};
         int channels[] = {0};
 
@@ -212,12 +213,12 @@ namespace proc_vision_ros2
         return maxVal/_UNIT;
     }
 
-    void Proc_vision::getAngle(int x1, int y1, int x2, int y2, AngleDetection angle){
+    void Proc_vision::getAngle(int x1, int y1, int x2, int y2, AngleDetection& angle){
         int x10 = (x2-x1)/10;
-        cv::Range rowsLeft(min(max(0,x1)+ x10,IMAGEWIDTH), min(max(0,x1)+ x10*2,IMAGEWIDTH));
-        cv::Range colsLeft(min(max(0,y1),IMAGEHEIGTH), min(max(0,y2),IMAGEHEIGTH));
-        cv::Range rowsMid((min(max(0,x1),IMAGEWIDTH) + min(max(0,x2),IMAGEWIDTH))/2 - x10/2, (min(max(0,x2),IMAGEWIDTH)+ min(max(0,x2),IMAGEWIDTH))/2 + x10/2);
-        cv::Range colsMid(min(max(0,y1),IMAGEHEIGTH), min(max(0,y2),IMAGEHEIGTH));
+        cv::Range colsLeft(min(max(0,x1)+ x10,IMAGEWIDTH), min(max(0,x1)+ x10*2,IMAGEWIDTH));
+        cv::Range rowsLeft(min(max(0,y1),IMAGEHEIGTH), min(max(0,y2),IMAGEHEIGTH));
+        cv::Range colsMid((min(max(0,x1),IMAGEWIDTH) + min(max(0,x2),IMAGEWIDTH))/2 - x10/2, (min(max(0,x2),IMAGEWIDTH)+ min(max(0,x2),IMAGEWIDTH))/2 + x10/2);
+        cv::Range rowsMid(min(max(0,y1),IMAGEHEIGTH), min(max(0,y2),IMAGEHEIGTH));
 
         Mat subMatriceLeft = _actualDepth(rowsLeft,colsLeft);
         Mat subMatriceMid = _actualDepth(rowsMid,colsMid);
@@ -229,7 +230,7 @@ namespace proc_vision_ros2
         int channels[] = {0};
 
         cv::calcHist(&subMatriceLeft, 1, channels, cv::Mat(), histLeft, 1, histSize, ranges, true, false);
-        cv::calcHist(&subMatriceLeft, 1, channels, cv::Mat(), histMid, 1, histSize, ranges, true, false);
+        cv::calcHist(&subMatriceMid, 1, channels, cv::Mat(), histMid, 1, histSize, ranges, true, false);
 
         double minValLeft, distanceLeft, distanceMid;
         cv::Point minLocLeft, maxLocleft;

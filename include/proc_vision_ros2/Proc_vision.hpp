@@ -154,6 +154,6 @@ namespace proc_vision_ros2
         const int IMAGEWIDTH = 1280;
         const int IMAGEHEIGTH = 720;
 
-        const int _UNIT=100;
+        const float _UNIT=100.0f;
     };
 }

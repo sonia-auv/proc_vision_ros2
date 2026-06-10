@@ -144,7 +144,7 @@ namespace proc_vision_ros2
         try
         {
             actualiseDepth();
-            cv::imwrite("/home/sonia/ssd/ImageDEPTH.png", _actualDepth);
+            cv::imwrite("/home/sonia/ssd/ImageDEPTH.tiff", _actualDepth);
             detections.detected_object={};
             auto imageCV2 = cv_bridge::toCvCopy(msg);
             if(imageCV2->image.type()== CV_8UC4){
@@ -195,30 +195,30 @@ namespace proc_vision_ros2
     }
 
     float Proc_vision::getDeepHistogram(int x1, int y1, int x2, int y2){
-        cv::Range cols(min(max(0,x1),IMAGEWIDTH), min(max(0,x2),IMAGEWIDTH));
+        RCLCPP_INFO_STREAM(this->get_logger(),  "x1 " << x1 << " y1 " << y1 << " x2 " << x2 << " y2 " << y2);
         cv::Range rows(min(max(0,y1),IMAGEHEIGTH), min(max(0,y2),IMAGEHEIGTH));
+        cv::Range cols(min(max(0,x1),IMAGEWIDTH), min(max(0,x2),IMAGEWIDTH));
         Mat subMatrice = _actualDepth(rows,cols);
         cv::Mat hist;
-        int histSize[] = {2500};
+        int histSize = 2500;
         float range[] = {0, 25000};
         const float* ranges[] = {range};
-        int channels[] = {0};
 
-        cv::calcHist(&subMatrice, 1, channels, cv::Mat(), hist, 1, histSize, ranges, true, false);
+        cv::calcHist(&subMatrice, 1, 0, cv::Mat(), hist, 1, &histSize, ranges, true, false);
 
-        double minVal, maxVal;
-        cv::Point minLoc, maxLoc;
+        cv::Point maxLoc(0,0);
 
-        cv::minMaxLoc(hist, &minVal, &maxVal, &minLoc, &maxLoc);
-        return maxVal/_UNIT;
+        cv::minMaxLoc(hist, nullptr, nullptr, nullptr, &maxLoc);
+
+        return maxLoc.y/_UNIT;
     }
 
     void Proc_vision::getAngle(int x1, int y1, int x2, int y2, AngleDetection& angle){
         int x10 = (x2-x1)/10;
-        cv::Range colsLeft(min(max(0,x1)+ x10,IMAGEWIDTH), min(max(0,x1)+ x10*2,IMAGEWIDTH));
         cv::Range rowsLeft(min(max(0,y1),IMAGEHEIGTH), min(max(0,y2),IMAGEHEIGTH));
-        cv::Range colsMid((min(max(0,x1),IMAGEWIDTH) + min(max(0,x2),IMAGEWIDTH))/2 - x10/2, (min(max(0,x2),IMAGEWIDTH)+ min(max(0,x2),IMAGEWIDTH))/2 + x10/2);
+        cv::Range colsLeft(min(max(0,x1)+ x10,IMAGEWIDTH), min(max(0,x1)+ x10*2,IMAGEWIDTH));
         cv::Range rowsMid(min(max(0,y1),IMAGEHEIGTH), min(max(0,y2),IMAGEHEIGTH));
+        cv::Range colsMid((min(max(0,x1),IMAGEWIDTH) + min(max(0,x2),IMAGEWIDTH))/2 - x10/2, (min(max(0,x2),IMAGEWIDTH)+ min(max(0,x2),IMAGEWIDTH))/2 + x10/2);
 
         Mat subMatriceLeft = _actualDepth(rowsLeft,colsLeft);
         Mat subMatriceMid = _actualDepth(rowsMid,colsMid);
@@ -232,11 +232,10 @@ namespace proc_vision_ros2
         cv::calcHist(&subMatriceLeft, 1, channels, cv::Mat(), histLeft, 1, histSize, ranges, true, false);
         cv::calcHist(&subMatriceMid, 1, channels, cv::Mat(), histMid, 1, histSize, ranges, true, false);
 
-        double minValLeft, distanceLeft, distanceMid;
-        cv::Point minLocLeft, maxLocleft;
+        cv::Point distanceLeft(0,0), distanceMid(0,0);
 
-        cv::minMaxLoc(histLeft, &minValLeft, &distanceLeft, &minLocLeft, &maxLocleft);
-        cv::minMaxLoc(histMid, &minValLeft, &distanceMid, &minLocLeft, &maxLocleft);
+        cv::minMaxLoc(histLeft, nullptr, nullptr, nullptr, &distanceLeft);
+        cv::minMaxLoc(histMid, nullptr, nullptr, nullptr, &distanceMid);
 
         int centreX = (x1+x2)/2;
         int centreY = (y1+y2)/2;
@@ -245,13 +244,13 @@ namespace proc_vision_ros2
         double angleY = (IMAGEHEIGTH/2 -centreY)*ZEDVFOV/IMAGEHEIGTH;
         double angle2 = (IMAGEWIDTH/2 -x1+x10)*ZEDHFOV/IMAGEWIDTH;
 
-        double pointXMid = cos(angleX) * distanceMid;
-        double pointYMid = sin(angleX) * distanceMid;
+        double pointXMid = cos(angleX) * distanceMid.y;
+        double pointYMid = sin(angleX) * distanceMid.y;
 
-        double pointXLeft = cos(angle2) * distanceMid;
-        double pointYLeft = sin(angle2) * distanceMid;
+        double pointXLeft = cos(angle2) * distanceLeft.y;
+        double pointYLeft = sin(angle2) * distanceLeft.y;
 
-        double pointSubY = cos(angleY) * distanceMid;
+        double pointSubY = cos(angleY) * distanceMid.y;
 
         double hypo = sqrt((pointXLeft-pointXMid)*(pointXLeft-pointXMid)+(pointYLeft-pointYMid)*(pointYLeft-pointYMid));
 

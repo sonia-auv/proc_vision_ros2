@@ -30,6 +30,11 @@ if(NOT CUDA_FOUND)
 endif()
 
 set(TENSORRT_PATH "/usr/local/cuda/")
+
+execute_process(
+	COMMAND "python3 -c 'import tensorrt as trt;print(trt.__version__)' | cut -d '.' -f 1"
+	OUTPUT_VARIABLE TENSORRT_MAJOR_VERSION
+	TIMEOUT 5)
         
 include_directories(include ${TENSORRT_PATH}/include
   /usr/local/cuda/targets/aarch64-linux/include)
@@ -61,11 +66,24 @@ target_compile_definitions(${PROJECT_NAME} PRIVATE API_EXPORTS)
 
 ament_target_dependencies(${PROJECT_NAME} rclcpp sonia_common_ros2 std_msgs std_srvs cv_bridge sensor_msgs image_transport OpenCV CUDA yaml-cpp)
 
-set(TENSORRT_LIBS
-        "/usr/lib/aarch64-linux-gnu/libnvinfer.so"
-        "/usr/lib/aarch64-linux-gnu/libnvonnxparser.so"
-        "/usr/lib/aarch64-linux-gnu/libnvparsers.so"
-        "/usr/lib/aarch64-linux-gnu/libnvinfer_plugin.so")
+if(CMAKE_SYSTEM_PROCESSOR STREQUAL "x86_64")
+	set(ARCH "x86_64")
+else()
+	set(ARCH "aarch64")
+endif()
+
+if (TENSORRT_MAJOR_VERSION LESS 10)
+	set(TENSORRT_LIBS
+		"/usr/lib/${ARCH}-linux-gnu/libnvinfer.so"
+		"/usr/lib/${ARCH}-linux-gnu/libnvonnxparser.so"
+		"/usr/lib/${ARCH}-linux-gnu/libnvparsers.so"
+		"/usr/lib/${ARCH}-linux-gnu/libnvinfer_plugin.so")
+else()
+	set(TENSORRT_LIBS
+		"/usr/lib/${ARCH}-linux-gnu/libnvinfer.so"
+		"/usr/lib/${ARCH}-linux-gnu/libnvonnxparser.so"
+		"/usr/lib/${ARCH}-linux-gnu/libnvinfer_plugin.so")
+endif()
 
 # Link libraries to the target
 target_link_libraries(

@@ -124,7 +124,7 @@ namespace proc_vision_ros2
         }
         catch(const std::exception& e)
         {
-            RCLCPP_INFO_STREAM(this->get_logger(),  "ERROR on the load of the model " << e.what());
+            RCLCPP_INFO_STREAM(this->get_logger(),  "ERROR while loading the model" << e.what());
         }
     }
 

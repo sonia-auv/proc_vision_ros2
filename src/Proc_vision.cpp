@@ -261,7 +261,7 @@ namespace proc_vision_ros2
         }else{
             double angleTeta = - asin((pointXMid - pointXLeft)/hypo);
             double newDistanceY = sin(angleTeta)*pointXMid+ cos(angleTeta)*pointYMid;
-            angle.angle_alpha = angleX * (180 / M_PI);
+            angle.angle_alpha = angleX;
             angle.distance_beta = pointSubY/_UNIT;
             angle.angle_teta = angleTeta * (180 / M_PI);
             angle.distance_teta = newDistanceY/_UNIT;

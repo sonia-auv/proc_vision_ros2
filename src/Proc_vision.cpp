@@ -243,13 +243,13 @@ namespace proc_vision_ros2
         double angleY = (IMAGEHEIGTH/2 -centreY)*ZEDVFOV/IMAGEHEIGTH;
         double angle2 = (IMAGEWIDTH/2 -x1+x10)*ZEDHFOV/IMAGEWIDTH;
 
-        double pointXMid = cos(angleX) * distanceMid.y;
-        double pointYMid = sin(angleX) * distanceMid.y;
+        double pointXMid = cos(angleX * (M_PI / 180)) * distanceMid.y;
+        double pointYMid = sin(angleX * (M_PI / 180)) * distanceMid.y;
 
-        double pointXLeft = cos(angle2) * distanceLeft.y;
-        double pointYLeft = sin(angle2) * distanceLeft.y;
+        double pointXLeft = cos(angle2 * (M_PI / 180)) * distanceLeft.y;
+        double pointYLeft = sin(angle2 * (M_PI / 180)) * distanceLeft.y;
 
-        double pointSubY = cos(angleY) * distanceMid.y;
+        double pointSubY = cos(angleY * (M_PI / 180)) * distanceMid.y;
 
         double hypo = sqrt((pointXLeft-pointXMid)*(pointXLeft-pointXMid)+(pointYLeft-pointYMid)*(pointYLeft-pointYMid));
 
@@ -263,7 +263,7 @@ namespace proc_vision_ros2
             double newDistanceY = sin(angleTeta)*pointXMid+ cos(angleTeta)*pointYMid;
             angle.angle_alpha = angleX;
             angle.distance_beta = pointSubY/_UNIT;
-            angle.angle_teta = angleTeta;
+            angle.angle_teta = angleTeta * (180 / M_PI);
             angle.distance_teta = newDistanceY/_UNIT;
         }
     }

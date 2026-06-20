@@ -161,8 +161,10 @@ namespace proc_vision_ros2
                     getAngle((int)detection.top_left_x,(int)detection.top_left_y,(int)detection.bottom_right_x,(int)detection.bottom_right_y, _angle);
                     detection.angle_alpha = _angle.angle_alpha;
                     detection.distance_beta = _angle.distance_beta;
-                    detection.angle_teta = _angle.angle_teta;
+#define RAD_TO_DEG(rad) ((rad) * 180 / M_PI)
+                    detection.angle_teta = RAD_TO_DEG(_angle.angle_teta);
                     detection.distance_teta = _angle.distance_teta;
+#undef RAD_TO_DEG
                 }
             }
             node_status.quality = sonia_common_ros2::msg::NodeStatus::Q_OK;

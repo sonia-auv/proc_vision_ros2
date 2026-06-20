@@ -149,8 +149,8 @@ namespace proc_vision_ros2
         AngleDetection _angle;
 
         // constant Image link need to be changed
-        const int ZEDVFOV = 52/2;
-        const int ZEDHFOV = 82/2;
+        const int ZEDVFOV = 56/2;
+        const int ZEDHFOV = 102/2;
         const int IMAGEWIDTH = 1280;
         const int IMAGEHEIGTH = 720;
 

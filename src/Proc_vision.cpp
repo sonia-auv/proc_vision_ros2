@@ -249,7 +249,7 @@ namespace proc_vision_ros2
         double pointXLeft = cos(angle2 * (M_PI / 180)) * distanceLeft.y;
         double pointYLeft = sin(angle2 * (M_PI / 180)) * distanceLeft.y;
 
-        double pointSubY = cos(angleY * (M_PI / 180)) * distanceMid.y;
+        double pointSubY = sin(angleY * (M_PI / 180)) * distanceMid.y;
 
         double hypo = sqrt((pointXLeft-pointXMid)*(pointXLeft-pointXMid)+(pointYLeft-pointYMid)*(pointYLeft-pointYMid));
 

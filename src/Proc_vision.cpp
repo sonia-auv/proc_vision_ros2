@@ -217,7 +217,7 @@ namespace proc_vision_ros2
         cv::Range rowsLeft(min(max(0,y1),IMAGEHEIGTH), min(max(0,y2),IMAGEHEIGTH));
         cv::Range colsLeft(min(max(0,x1)+ x10,IMAGEWIDTH), min(max(0,x1)+ x10*2,IMAGEWIDTH));
         cv::Range rowsMid(min(max(0,y1),IMAGEHEIGTH), min(max(0,y2),IMAGEHEIGTH));
-        cv::Range colsMid((min(max(0,x1),IMAGEWIDTH) + min(max(0,x2),IMAGEWIDTH))/2 - x10/2, (min(max(0,x2),IMAGEWIDTH)+ min(max(0,x2),IMAGEWIDTH))/2 + x10/2);
+        cv::Range colsMid(min(max(0,((x1 + x2)/2) - x10/2),IMAGEWIDTH), min(max(0,((x1 + x2)/2) + x10/2),IMAGEWIDTH));
 
         Mat subMatriceLeft = _actualDepth(rowsLeft,colsLeft);
         Mat subMatriceMid = _actualDepth(rowsMid,colsMid);
@@ -255,14 +255,14 @@ namespace proc_vision_ros2
 
         if(hypo < 0.01){
             angle.angle_alpha = angleX;
-            angle.distance_beta = pointSubY/_UNIT;
+            angle.distance_beta = pointSubY /_UNIT;
             angle.angle_teta = 0.0;
             angle.distance_teta = 0.0;
         }else{
             double angleTeta = - asin((pointXMid - pointXLeft)/hypo);
             double newDistanceY = sin(angleTeta)*pointXMid+ cos(angleTeta)*pointYMid;
             angle.angle_alpha = angleX;
-            angle.distance_beta = pointSubY/_UNIT;
+            angle.distance_beta = pointSubY /_UNIT;
             angle.angle_teta = angleTeta * (180 / M_PI);
             angle.distance_teta = newDistanceY/_UNIT;
         }

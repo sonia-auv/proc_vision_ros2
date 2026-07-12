@@ -12,7 +12,7 @@ namespace proc_vision_ros2
     Proc_vision::Proc_vision()
         : Node("proc_vision"){
 
-        this->declare_parameter("models", std::vector<string>({"test_aquadome_2025"}));
+        this->declare_parameter("models", std::vector<string>({"IAFRONT"}));
 
         MODELDIR = (string)std::getenv("SONIA_WS")+"/src/proc_vision_ros2/models/";
 
@@ -20,7 +20,7 @@ namespace proc_vision_ros2
         qosBestEffort.reliability(rclcpp::ReliabilityPolicy::BestEffort).durability(rclcpp::DurabilityPolicy::Volatile).history(rclcpp::HistoryPolicy::KeepLast);
 
         _subscriberFrontCamera =
-            this->create_subscription<sensor_msgs::msg::Image>("/zed/zed_node/left/image_rect_color", 10, std::bind(&Proc_vision::messageFrontCameraCallBack, this, _1));
+            this->create_subscription<sensor_msgs::msg::Image>("/zed/zed_node/rgb/color/rect/image", 10, std::bind(&Proc_vision::messageFrontCameraCallBack, this, _1));
 
         _subscriberFrontCameraSim =
             this->create_subscription<sensor_msgs::msg::Image>("/proc_simulation/front", 10, std::bind(&Proc_vision::messageFrontCameraCallBack, this, _1));
@@ -121,6 +121,7 @@ namespace proc_vision_ros2
             }
 
             response->model_name = model_name;
+            RCLCPP_INFO_STREAM(this->get_logger(),  "Model loaded: " << model_name);
         }
         catch(const std::exception& e)
         {
@@ -144,7 +145,6 @@ namespace proc_vision_ros2
         try
         {
             actualiseDepth();
-            cv::imwrite("/home/sonia/ssd/ImageDEPTH.tiff", _actualDepth);
             detections.detected_object={};
             auto imageCV2 = cv_bridge::toCvCopy(msg);
             if(imageCV2->image.type()== CV_8UC4){

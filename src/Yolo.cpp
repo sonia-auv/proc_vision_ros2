@@ -83,21 +83,29 @@ namespace proc_vision_ros2
 
     void Yolo::loadingParam(){
 
-        // Retrieve input dimensions from the engine
-        input_h = engine->getBindingDimensions(0).d[2];
-        input_w = engine->getBindingDimensions(0).d[3];
-        // Retrieve detection attributes and number of detections
-        detection_attribute_size = engine->getBindingDimensions(1).d[1];
-        num_detections = engine->getBindingDimensions(1).d[2];
+        // For TensorRT versions 10 and above, use getTensorShape with tensor names
+        auto input_dims = engine->getTensorShape(engine->getIOTensorName(0));
+        input_h = input_dims.d[2];
+        input_w = input_dims.d[3];
+
+        auto output_dims = engine->getTensorShape(engine->getIOTensorName(1));
+        detection_attribute_size = output_dims.d[1];
+        num_detections = output_dims.d[2];
+        
+        // Allocate GPU memory for input buffer (assuming 3 channels: RGB)
+        CUDA_CHECK(cudaMalloc(&gpu_buffers[0], 3 * input_w * input_h * sizeof(float)));
+        // Allocate GPU memory for output buffer
+        CUDA_CHECK(cudaMalloc(&gpu_buffers[1], detection_attribute_size * num_detections * sizeof(float)));
+
+        // Set tensor addresses for TensorRT 10+
+        context->setTensorAddress(engine->getIOTensorName(0), gpu_buffers[0]);
+        context->setTensorAddress(engine->getIOTensorName(1), gpu_buffers[1]);
+        
         // Calculate the number of classes based on detection attributes
         num_classes = detection_attribute_size - 4;
 
         // Allocate CPU memory for output buffer
         cpu_output_buffer = new float[detection_attribute_size * num_detections];
-        // Allocate GPU memory for input buffer (assuming 3 channels: RGB)
-        CUDA_CHECK(cudaMalloc(&gpu_buffers[0], 3 * input_w * input_h * sizeof(float)));
-        // Allocate GPU memory for output buffer
-        CUDA_CHECK(cudaMalloc(&gpu_buffers[1], detection_attribute_size * num_detections * sizeof(float)));
 
         // Initialize CUDA preprocessing with maximum image size
         cuda_preprocess_init(MAX_IMAGE_SIZE);
@@ -250,10 +258,8 @@ namespace proc_vision_ros2
     {
         // Create a TensorRT builder
         auto builder = createInferBuilder(logger);
-        // Define network flags for explicit batch dimensions
-        const auto explicitBatch = 1U << static_cast<uint32_t>(NetworkDefinitionCreationFlag::kEXPLICIT_BATCH);
         // Create a network definition with explicit batch
-        INetworkDefinition* network = builder->createNetworkV2(explicitBatch);
+        INetworkDefinition* network = builder->createNetworkV2(0);
         // Create builder configuration
         IBuilderConfig* config = builder->createBuilderConfig();
         // Enable FP16 precision if specified

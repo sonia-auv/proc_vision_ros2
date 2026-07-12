@@ -64,7 +64,6 @@ ament_target_dependencies(${PROJECT_NAME} rclcpp sonia_common_ros2 std_msgs std_
 set(TENSORRT_LIBS
         "/usr/lib/aarch64-linux-gnu/libnvinfer.so"
         "/usr/lib/aarch64-linux-gnu/libnvonnxparser.so"
-        "/usr/lib/aarch64-linux-gnu/libnvparsers.so"
         "/usr/lib/aarch64-linux-gnu/libnvinfer_plugin.so")
 
 # Link libraries to the target
@@ -79,7 +78,7 @@ set_target_properties(
     CUDA_SEPARABLE_COMPILATION ON
 )
 
-# set(CMAKE_CUDA_ARCHITECTURES "72")
+# set(CMAKE_CUDA_ARCHITECTURES "87")
 
 if(BUILD_TESTING)
   find_package(ament_lint_auto REQUIRED)

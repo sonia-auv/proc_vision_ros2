@@ -2,6 +2,6 @@
   ros__parameters:
 
     models: [
-      "IA2026Aquadome_2i",
-      "IA2026AUV8"
+      "IAGENERALv1",
+      "IAFRONT"
       ]
